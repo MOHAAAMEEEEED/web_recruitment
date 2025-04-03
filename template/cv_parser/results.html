@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Parsed CV Results</h2>
+    
+    {% if parsed_data.error %}
+        <div class="alert alert-danger">{{ parsed_data.error }}</div>
+    {% else %}
+        {% for category, items in parsed_data.items %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3>{{ category }}</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                    {% for item in items %}
+                        <li class="list-group-item">{{ item }}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <a href="{% url 'cv_parser:upload_cv' %}" class="btn btn-primary">Parse Another CV</a>
+</div>
+{% endblock %}
