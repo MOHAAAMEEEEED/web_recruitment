@@ -191,6 +191,5 @@ logs/
 debug.log
 
 # Ignore Static & Media Files (Generated files)
-static/
 staticfiles/
 media/
