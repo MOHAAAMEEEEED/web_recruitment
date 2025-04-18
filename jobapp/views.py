@@ -13,8 +13,7 @@ from django.core.mail import send_mail
 from django.http import JsonResponse
 from .models import Video
 from django.views.decorators.csrf import csrf_exempt
-
-
+from whisper_vid_audio.transcribe import WhisperTranscriber
 
 from account.models import User
 from jobapp.forms import *
@@ -68,6 +67,24 @@ def home_view(request):
     print('ok')
     return render(request, 'jobapp/index.html', context)
 
+
+from django.shortcuts import render
+from .models import Category  # Assuming the model name is Category
+from jobapp.models import Category
+
+def post_job(request):
+    categories = Category.objects.all()  # Fetch all categories from the database
+    form = JobForm(request.POST or None)  # Assuming your form is named JobForm
+    
+    if request.method == 'POST' and form.is_valid():
+        # Handle form submission logic here
+        form.save()
+    
+    return render(request, 'post-job.html', {
+        'form': form,
+        'categories': categories,  # Pass categories to the template
+    })
+
 @cache_page(60 * 15)
 def job_list_View(request):
     """
@@ -86,6 +103,33 @@ def job_list_View(request):
     return render(request, 'jobapp/job-list.html', context)
 
 
+# @login_required(login_url=reverse_lazy('account:login'))
+# @user_is_employer
+# def create_job_View(request):
+#     """
+#     Provide the ability to create job post
+#     """
+#     form = JobForm(request.POST or None)
+
+#     user = get_object_or_404(User, id=request.user.id)
+#     categories = Category.objects.all()
+
+#     if request.method == 'POST':
+
+#         if form.is_valid():
+
+#             instance = form.save(commit=False)
+#             instance.user = user
+#             # Category can be optional (None)
+#             instance.save()
+#             # for save tags
+#             form.save_m2m()
+#             messages.success(
+#                     request, 'You are successfully posted your job! Please wait for review.')
+#             return redirect(reverse("jobapp:single-job", kwargs={
+#                                     'id': instance.id
+#                                     }))
+
 @login_required(login_url=reverse_lazy('account:login'))
 @user_is_employer
 def create_job_View(request):
@@ -93,14 +137,11 @@ def create_job_View(request):
     Provide the ability to create job post
     """
     form = JobForm(request.POST or None)
-
     user = get_object_or_404(User, id=request.user.id)
     categories = Category.objects.all()
 
     if request.method == 'POST':
-
         if form.is_valid():
-
             instance = form.save(commit=False)
             instance.user = user
             instance.save()
@@ -128,8 +169,6 @@ def upload_video(request):
         return JsonResponse({'status': 'success', 'message': 'Video uploaded successfully.'})
     else:
         return JsonResponse({'status': 'error', 'message': 'No video file provided or wrong method.'})
-
-
 
 def single_job_view(request, id):
     """
@@ -195,7 +234,7 @@ def search_result_view(request):
     #     ).distinct()
 
     # job_list = Job.objects.filter(job_type__iexact=job_type) | Job.objects.filter(
-    #     location__icontains=location) | Job.objects.filter(title__icontains=text) | Job.objects.filter(company_name__icontains=text)
+    #     location_icontains=location) | Job.objects.filter(titleicontains=text) | Job.objects.filter(company_name_icontains=text)
 
     paginator = Paginator(job_list, 10)
     page_number = request.GET.get('page')
@@ -208,41 +247,105 @@ def search_result_view(request):
     return render(request, 'jobapp/result.html', context)
 
 
+# Importing necessary modules
+from .utils import calculate_similarity_score
+from whisper_vid_audio.transcribe import WhisperTranscriber
+from .models import Applicant, Job
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
+
 @login_required(login_url=reverse_lazy('account:login'))
 @user_is_employee
 def apply_job_view(request, id):
-
-    form = JobApplyForm(request.POST or None)
-
+    """
+    Handle job application process with video upload, transcription, and similarity score calculation.
+    """
     user = get_object_or_404(User, id=request.user.id)
-    applicant = Applicant.objects.filter(user=user, job=id)
+    job = get_object_or_404(Job, id=id)
 
-    if not applicant:
-        if request.method == 'POST':
+    # Check if the user has already applied for this job
+    if Applicant.objects.filter(user=user, job_id=id).exists():
+        messages.error(request, 'You already applied for this job!')
+        return redirect(reverse("jobapp:single-job", kwargs={'id': id}))
 
-            if form.is_valid():
-                instance = form.save(commit=False)
-                instance.user = user
+    if request.method == 'POST':
+        form = JobApplyForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            # Check if the video file is provided
+            if not request.FILES.get('video'):
+                messages.error(request, 'Video introduction is required!')
+                return render(request, 'jobapp/apply_job.html', {'form': form, 'job': job})
+
+            # Save the applicant details without video first
+            instance = form.save(commit=False)
+            instance.user = user
+            instance.job = job
+            instance.save()
+
+            try:
+                # Save the video and transcribe it
+                transcriber = WhisperTranscriber()
+                result = transcriber.transcribe(instance.video.path)
+                transcription = result.get('text', '')
+
+                # Calculate similarity score between job description and transcription
+                similarity_score = calculate_similarity_score(job.description, transcription)
+                instance.transcription = transcription
+                instance.similarity_score = similarity_score
+
+                # Save transcription and similarity score
                 instance.save()
 
-                messages.success(
-                    request, 'You have successfully applied for this job!')
-                return redirect(reverse("jobapp:single-job", kwargs={
-                    'id': id
-                }))
+                messages.success(request, 'You have successfully applied for this job!')
+                return redirect(reverse("jobapp:single-job", kwargs={'id': id}))
 
+            except Exception as e:
+                # Clean up if something went wrong
+                if instance.pk:
+                    instance.delete()
+                messages.error(request, f'Error during transcription or scoring: {str(e)}')
+                return render(request, 'jobapp/apply_job.html', {'form': form, 'job': job})
         else:
-            return redirect(reverse("jobapp:single-job", kwargs={
-                'id': id
-            }))
-
+            messages.error(request, 'Please correct the errors in the form.')
     else:
+        form = JobApplyForm(initial={'job': job.id})
 
-        messages.error(request, 'You already applied for the Job!')
+    return render(request, 'jobapp/apply_job.html', {'form': form, 'job': job})
 
-        return redirect(reverse("jobapp:single-job", kwargs={
-            'id': id
-        }))
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
+from .models import Applicant
+from .utils import calculate_similarity_score
+
+@login_required(login_url=reverse_lazy('account:login'))
+@user_is_employer
+def all_applicants_view(request, id):
+    """
+    View for employer to see all applicants and their similarity scores.
+    """
+    # Fetch all applicants for the given job id and order by similarity score (descending)
+    all_applicants = Applicant.objects.filter(job=id)
+
+    # Calculate similarity score for each applicant (if it's not already calculated)
+    for applicant in all_applicants:
+        if applicant.transcription:  # Ensure there's a transcription to compare with
+            score = calculate_similarity_score(applicant.job.description, applicant.transcription)
+            applicant.similarity_score = score
+            applicant.save()
+
+    # Order applicants by similarity score in descending order
+    all_applicants = all_applicants.order_by('-similarity_score')
+
+    context = {
+        'all_applicants': all_applicants
+    }
+
+    return render(request, 'jobapp/all-applicants.html', context)
 
 
 @login_required(login_url=reverse_lazy('account:login'))
@@ -304,21 +407,6 @@ def make_complete_job_view(request, id):
     return redirect('jobapp:dashboard')
 
 
-
-@login_required(login_url=reverse_lazy('account:login'))
-@user_is_employer
-def all_applicants_view(request, id):
-
-    all_applicants = Applicant.objects.filter(job=id)
-
-    context = {
-
-        'all_applicants': all_applicants
-    }
-
-    return render(request, 'jobapp/all-applicants.html', context)
-
-
 @login_required(login_url=reverse_lazy('account:login'))
 @user_is_employee
 def delete_bookmark_view(request, id):
@@ -336,13 +424,31 @@ def delete_bookmark_view(request, id):
 @login_required(login_url=reverse_lazy('account:login'))
 @user_is_employer
 def applicant_details_view(request, id):
-
     applicant = get_object_or_404(User, id=id)
-    video = Video.objects.filter(user=applicant).first()
+    
+    # Get application video and details
+    # First we'll get the job id from the URL parameter
+    job_id = request.GET.get('job_id')
+    
+    # If job_id is provided, get the specific application
+    if job_id:
+        application = Applicant.objects.filter(
+            user=applicant,
+            job_id=job_id
+        ).first()
+    else:
+        # Otherwise get the most recent application
+        application = Applicant.objects.filter(
+            user=applicant
+        ).order_by('-timestamp').first()
+        
+    # Get all jobs this applicant has applied to
+    applied_jobs = Applicant.objects.filter(user=applicant)
+    
     context = {
-
         'applicant': applicant,
-        'video': video, 
+        'application': application,
+        'applied_jobs': applied_jobs,
     }
 
     return render(request, 'jobapp/applicant-details.html', context)
@@ -389,12 +495,11 @@ def job_bookmark_view(request, id):
 def job_edit_view(request, id=id):
     """
     Handle Job Update
-
     """
-
     job = get_object_or_404(Job, id=id, user=request.user.id)
-    categories = Category.objects.all()
     form = JobEditForm(request.POST or None, instance=job)
+    categories = Category.objects.all()
+    
     if form.is_valid():
         instance = form.save(commit=False)
         instance.save()
@@ -404,12 +509,11 @@ def job_edit_view(request, id=id):
         return redirect(reverse("jobapp:single-job", kwargs={
             'id': instance.id
         }))
+    
     context = {
-
         'form': form,
         'categories': categories
     }
-
     return render(request, 'jobapp/job-edit.html', context)
 
 def about_us(request):
@@ -433,7 +537,7 @@ def contact(request):
            "Job Portal - Chat",
            name + "-" + message,
            email,
-           ["*******************"],
+           ["*"],
            fail_silently=False,
         )
     return render(request, "jobapp/contact.html", context)

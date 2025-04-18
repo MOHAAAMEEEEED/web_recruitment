@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from ckeditor.fields import RichTextField
 from taggit.managers import TaggableManager
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -21,17 +20,15 @@ JOB_TYPE = (
     ('3', "Internship"),
 )
 
-# Define category choices
-CATEGORY_CHOICES = (
-    ('software', 'Software'),
-    ('tech', 'Tech'),
-)
-
 class Category(models.Model):
-    name = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='software')
-
+    name = models.CharField(max_length=255, default="Uncategorized")  # Added default
+    description = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        verbose_name_plural = "Categories"
+    
     def __str__(self):
-        return self.name
+        return self.name  # Return name directly
 
 class Job(models.Model):
     user = models.ForeignKey(User, related_name='User', on_delete=models.CASCADE) 
@@ -40,7 +37,7 @@ class Job(models.Model):
     tags = TaggableManager()
     location = models.CharField(max_length=300)
     job_type = models.CharField(choices=JOB_TYPE, max_length=1)
-    category = models.ForeignKey(Category, related_name='Category', on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, related_name='jobs', on_delete=models.CASCADE, null=True, blank=True)
     salary = models.CharField(max_length=30, blank=True)
     company_name = models.CharField(max_length=300)
     company_description = RichTextField(blank=True, null=True)
@@ -60,7 +57,10 @@ class Job(models.Model):
 class Applicant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now=True, auto_now_add=False)
+    timestamp = models.DateTimeField(auto_now=True)
+    video = models.FileField(upload_to='applicant_videos/', null=True, blank=True)
+    transcription = models.TextField(null=True, blank=True)
+    similarity_score = models.FloatField(null=True, blank=True)  # To store similarity score
 
     def __str__(self):
         return self.job.title
@@ -68,21 +68,14 @@ class Applicant(models.Model):
 class BookmarkJob(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now=True, auto_now_add=False)
+    timestamp = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.job.title
 
-
-
-User = get_user_model()
-
-
 class Video(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='videos', null=True, default=1)  # assuming '1' is a valid User id
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='videos', null=True, default=1)
     file = models.FileField(upload_to='videos/')
-
 
     def __str__(self):
         return f"{self.user.username}'s video"
-

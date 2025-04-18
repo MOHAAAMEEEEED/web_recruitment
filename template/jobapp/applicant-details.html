@@ -3,7 +3,7 @@
 {% block content %}
 
     <!-- HOME -->
-    <section class="section-hero overlay inner-page bg-image" style="background-image: url(/static/images/hero_4.jpg);" id="home-section">
+    <section class="section-hero overlay inner-page bg-image" style="background-image: url(/static/images/hero_7.jpg);" id="home-section">
       <div class="container">
         <div class="row">
           <div class="col-md-7">
@@ -17,53 +17,209 @@
       </div>
     </section>
 
-    <section class="site-section block__18514" id="next-section">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-3 mr-auto"></div>
-          <div class="col-lg-8">
-            <span class="text-primary d-block mb-5"><span class="icon-user-circle display-1"></span></span>
-            <p><strong class="text-black">Name  :</strong> {{ applicant.get_full_name }}</p>
-            <p><strong class="text-black">Email  :</strong> {{ applicant.email }}</p>
-            <p><strong class="text-black">Mobile Number  :</strong> {{ applicant.MobileNumber }}</p>
-            <p><strong class="text-black">Gender  :</strong>
+    <!-- Main Content Container -->
+    <div class="container mt-5 mb-5">
+      <div class="row">
+        <!-- Left Column - Candidate Information -->
+        <div class="col-lg-6 mb-4">
+          <div class="candidate-info bg-white p-4 rounded shadow-sm h-100">
+            <div class="d-flex align-items-center mb-4">
+              <span class="icon-user-circle text-primary mr-2" style="font-size: 2rem;"></span>
+              <h3 class="text-black mb-0">Candidate Information</h3>
+            </div>
+            
+            <p><strong class="text-black">Name:</strong> {{ applicant.get_full_name }}</p>
+            <p><strong class="text-black">Email:</strong> {{ applicant.email }}</p>
+            <p><strong class="text-black">Mobile Number:</strong> {{ applicant.MobileNumber }}</p>
+            <p><strong class="text-black">Gender:</strong>
                 {% if applicant.gender == 'M' %}
                     Male
                 {% else %}
                     Female
                 {% endif %}
             </p>
-            <p><strong class="text-black">Location  :</strong> {{ applicant.location }}</p>
-            <p><strong class="text-black">Skills  :</strong> {{ applicant.skills }}</p>
+            <p><strong class="text-black">Location:</strong> {{ applicant.location }}</p>
+            <p><strong class="text-black">Skills:</strong> {{ applicant.skills }}</p>
 
             {% if applicant.CV_file %}
-            <p><strong class="text-black">CV  :</strong>
-                <a href="{% url 'account:view_cv' applicant.id %}" target="_blank" class="btn btn-primary">
+            <p><strong class="text-black">CV:</strong>
+                <a href="{% url 'account:view_cv' applicant.id %}" target="_blank" class="btn btn-primary btn-sm">
                     View CV
                 </a>
             </p>
+            <p><strong class="text-black">Parsed cv data:</strong>
+              <a href="{% url 'cv_parser:analyze_cv' applicant.id %}" class="btn btn-primary btn-sm">
+                  Analyze CV
+              </a>
+              <a href="{% url 'cv_parser:upload_cv' %}?user_id={{ applicant.id }}" class="btn btn-info btn-sm">
+                  Advanced CV Parser
+              </a>
+            </p>          
             {% else %}
             <p><strong class="text-black text-danger">No CV uploaded.</strong></p>
             {% endif %}
-
-            <!-- Video Section -->
-            <div class="applicant-video mt-4">
-              {% if video %}
-              <h3 class="text-black">Applicant Video</h3>
-              <video width="320" height="240" controls>
-                  <source src="{{ video.file.url }}" type="video/webm">
-                  Your browser does not support the video tag.
-              </video>
-              {% else %}
-              <p><strong class="text-black text-danger">No video uploaded.</strong></p>
-              {% endif %}
+          </div>
+        </div>
+        
+        <!-- Right Column - Application Details -->
+        <div class="col-lg-6 mb-4">
+          {% if application %}
+          <div class="application-details bg-white p-4 rounded shadow-sm h-100">
+            <div class="d-flex align-items-center mb-4">
+              <span class="icon-briefcase text-primary mr-2" style="font-size: 2rem;"></span>
+              <h3 class="text-black mb-0">Application Details</h3>
             </div>
-          
-          
-
-            <p><a href="mailto:{{ applicant.email }}" class="btn btn-primary btn-md mt-4">Contact</a></p>
+            
+            <p><strong class="text-black">Applied for:</strong> {{ application.job.title }}</p>
+            <p><strong class="text-black">Application Date:</strong> {{ application.timestamp|date:"F d, Y" }}</p>
+            
+            <div class="mt-4">
+              <a href="mailto:{{ applicant.email }}" class="btn btn-primary">Contact Candidate</a>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Video & Transcription Row -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="bg-white p-4 rounded shadow-sm">
+            {% if application and application.video %}
+            <div class="d-flex align-items-center mb-4">
+              <span class="icon-video-camera text-primary mr-2" style="font-size: 2rem;"></span>
+              <h3 class="text-black mb-0">Video Introduction</h3>
+            </div>
+            
+            <!-- Video Button -->
+            <div class="mb-4">
+              <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#videoModal">
+                <i class="icon-play-circle mr-2"></i> Show Video
+              </button>
+            </div>
+            
+            <!-- Transcription Section -->
+            {% if application.transcription %}
+            <div class="mt-4">
+              <button class="btn btn-outline-primary" id="transcription-toggle">Show Transcription</button>
+              
+              <div class="transcription-container mt-3" id="transcription-content" style="display: none;">
+                <div class="card">
+                  <div class="card-header bg-light">
+                    <h4 class="text-black mb-0">Video Transcription</h4>
+                  </div>
+                  <div class="card-body">
+                    <p>{{ application.transcription }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="d-flex align-items-center mb-4">
+              <span class="icon-video-camera text-primary mr-2" style="font-size: 2rem;"></span>
+              <h3 class="text-black mb-0">Video Introduction</h3>
+            </div>
+            <p><strong class="text-black text-danger">No video introduction available for this application.</strong></p>
+            {% endif %}
           </div>
         </div>
       </div>
-    </section>
+      
+      <!-- Other Applications Row -->
+      {% if applied_jobs.count > 1 %}
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="other-applications bg-white p-4 rounded shadow-sm">
+            <div class="d-flex align-items-center mb-4">
+              <span class="icon-briefcase text-primary mr-2" style="font-size: 2rem;"></span>
+              <h4 class="text-black mb-0">Other Applications from this Candidate</h4>
+            </div>
+            <div class="list-group">
+              {% for job_app in applied_jobs %}
+                {% if not job_app.id == application.id %}
+                <a href="{% url 'jobapp:applicant-details' applicant.id %}?job_id={{ job_app.job.id }}" 
+                   class="list-group-item list-group-item-action">
+                  {{ job_app.job.title }} <small class="text-muted">({{ job_app.timestamp|date:"M d, Y" }})</small>
+                </a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Video Modal -->
+    {% if application and application.video %}
+    <div class="modal fade" id="videoModal" tabindex="-1" role="dialog" aria-labelledby="videoModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="videoModalLabel">{{ applicant.get_full_name }}'s Video Introduction</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body p-0">
+            <div class="embed-responsive embed-responsive-16by9">
+              <video class="embed-responsive-item" controls id="applicantVideo">
+                <source src="{{ application.video.url }}" type="video/webm">
+                <source src="{{ application.video.url }}" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const transcriptionToggle = document.getElementById('transcription-toggle');
+    const transcriptionContent = document.getElementById('transcription-content');
+    
+    if (transcriptionToggle && transcriptionContent) {
+      transcriptionToggle.addEventListener('click', function() {
+        // Toggle visibility
+        if (transcriptionContent.style.display === 'none') {
+          transcriptionContent.style.display = 'block';
+          transcriptionToggle.textContent = 'Hide Transcription';
+        } else {
+          transcriptionContent.style.display = 'none';
+          transcriptionToggle.textContent = 'Show Transcription';
+        }
+      });
+    }
+    
+    // Handle video modal events
+    const videoModal = document.getElementById('videoModal');
+    const videoElement = document.getElementById('applicantVideo');
+    
+    if (videoModal && videoElement) {
+      // Pause video when modal is closed
+      $(videoModal).on('hidden.bs.modal', function () {
+        videoElement.pause();
+      });
+      
+      // Debug video loading
+      videoElement.addEventListener('error', function(e) {
+        console.error('Video error:', e);
+      });
+      
+      videoElement.addEventListener('loadeddata', function() {
+        console.log('Video loaded successfully');
+      });
+    }
+  });
+</script>
 {% endblock %}

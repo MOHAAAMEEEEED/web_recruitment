@@ -3,7 +3,7 @@
   {% block content %}
 
     <!-- HOME -->
-    <section class="section-hero overlay inner-page bg-image" style="background-image: url(/static/images/hero_4.jpg);" id="home-section">
+    <section class="section-hero overlay inner-page bg-image" style="background-image: url(/static/images/hero_7.jpg);" id="home-section">
       <div class="container">
         <div class="row">
           <div class="col-md-7">
@@ -65,18 +65,18 @@
                         </select>
                         </div>
                     
-                    {% elif field.name == 'category' %}
+      
+                        {% elif field.name == 'category' %}
                         <div class="form-group">
-                        <label for="job-type">Category</label>
-                        <select name="category" class="selectpicker border rounded" id="category" data-style="btn-black" data-width="100%" data-live-search="true" title="Select Category">                              
-                              {% for category in categories %}
-                              
-                                    <option value="{{ category.id }}">{{ category.name }}</option>
-
-                              {% endfor %}
-                        </select>
+                          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                          {{ field }}
+                          {% if field.errors %}
+                            <div class="invalid-feedback">
+                              {{ field.errors }}
+                            </div>
+                          {% endif %}
                         </div>
-                                           
+                                   
                         {% elif field.name == 'description' %}
                               <div class="form-group">
                                 <label for="job-type">Description</label>

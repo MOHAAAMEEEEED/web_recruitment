@@ -7,7 +7,7 @@
 
 
 <section class="section-hero overlay inner-page bg-image"
-  style="background-image: url(/static/images/hero_4.jpg);" id="home-section">
+  style="background-image: url(/static/images/hero_7.jpg);" id="home-section">
   <div class="container">
     <div class="row">
       <div class="col-md-7">
@@ -72,7 +72,7 @@
                 {% endif %}
             
             {% elif request.user.id == job.user.id and  user.role == 'employer'  %}
-            <button onclick="call_sw_alert_func('{% url 'jobapp:delete' job.id %}','{{ job.id }}','Once Deleted, You Will Not be Able To Recover This Post!')" class="btn btn-block btn-danger btn-md">Delete</button>
+            <button onclick="call_sw_alert_func('{% url 'jobapp:delete' job.id %}', '{{ job.id }}', 'Once Deleted, You Will Not be Able To Recover This Post!')" class="btn btn-block btn-danger btn-md">Delete</button>
                                    
             {% comment %} {% else %}
 
@@ -96,12 +96,7 @@
 
               {% else %}
 
-              <form action="{% url 'jobapp:apply-job' job.id %}" method="POST">
-                {% csrf_token %}
-                <input type="hidden" name="job" value="{{ job.id }}">
-
-                <input type="submit" class="btn btn-block btn-primary btn-md" value="Apply Now" />
-              </form>
+              <a href="{% url 'jobapp:apply-job' job.id %}" class="btn btn-block btn-primary btn-md">Apply Now</a>
               {% endif %}
             
           {% elif request.user.id == job.user.id and user.role == 'employer' %}
@@ -143,7 +138,7 @@
             {% endif %}
 
             {% elif request.user.id == job.user.id and user.role == 'employer' %}
-            <button onclick="call_sw_alert_func('{% url 'jobapp:delete' job.id %}','{{ job.id }}','Once Deleted, You Will Not be Able To Recover This Post!')" class="btn btn-block btn-danger btn-md">Delete</button>
+            <button onclick="call_sw_alert_func('{% url 'jobapp:delete' job.id %}', '{{ job.id }}', 'Once Deleted, You Will Not be Able To Recover This Post!')" class="btn btn-block btn-danger btn-md">Delete</button>
                                    
            {% elif user.role == none %}
 
@@ -165,12 +160,7 @@
           </div>
           {% else %}
           <div class="col-6">
-            <form action="{% url 'jobapp:apply-job' job.id %}" method="POST">
-              {% csrf_token %}
-              <input type="hidden" name="job" value="{{ job.id }}">
-
-              <input type="submit" class="btn btn-block btn-primary btn-md" value="Apply Now" />
-            </form>
+            <a href="{% url 'jobapp:apply-job' job.id %}" class="btn btn-block btn-primary btn-md">Apply Now</a>
           </div>
           {% endif %}
 
@@ -181,37 +171,9 @@
           </div>
           {% elif user.role == none %}
             <div class="col-6">
-              <form action="{% url 'jobapp:apply-job' job.id %}" method="POST">
-                {% csrf_token %}
-                <input type="hidden" name="job" value="{{ job.id }}">
-
-                <input type="submit" class="btn btn-block btn-primary btn-md" value="Apply Now" />
-              </form>
+              <a href="{% url 'jobapp:apply-job' job.id %}" class="btn btn-block btn-primary btn-md">Apply Now</a>
           </div> 
           {% endif %}
-                        <div style="position: relative; text-align: center; padding: 20px;">
-              <button class="btn btn-block btn-light btn-md btn-custom" id="captureVideoButton">Capture Video</button></div>          <!-- The video element will be inserted here by JavaScript -->
-              <style>
-                .btn-custom {
-                    background-color: #4CAF50; /* Green background */
-                    color: white; /* White text */
-                    padding: 10px 20px;
-                    border: none;
-                    border-radius: 5px; /* Rounded corners */
-                    font-size: 16px;
-                    cursor: pointer;
-                    transition: background-color 0.3s ease; /* Smooth transition */
-                }
-              
-                .btn-custom:hover {
-                    background-color: #45a049; /* Darker green when hovered */
-                }
-              
-                .btn-disabled {
-                    background-color: #ccc; /* Gray background */
-                    cursor: not-allowed; /* Disable cursor */
-                }
-               </style>
         </div>
 
       </div>
@@ -235,6 +197,9 @@
             <li class="mb-2"><strong class="text-black">Job Location:</strong> {{ job.location }}</li>
             <li class="mb-2"><strong class="text-black">Salary:</strong> {{ job.salary }}</li>
             <li class="mb-2"><strong class="text-black">Gender:</strong> {{ job.gender }}</li>
+            {% if job.category %}
+            <li class="mb-2"><strong class="text-black">Category:</strong> {{ job.category }}</li>
+            {% endif %}
             <li class="mb-2"><strong class="text-black">Application Deadline:</strong> {{ job.last_date|date:"d M Y" }}
             </li>
           </ul>

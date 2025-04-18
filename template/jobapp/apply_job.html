@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- HOME -->
+<section class="section-hero overlay inner-page bg-image" style="background-image: url(/static/images/hero_7.jpg);" id="home-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-7">
+        <h1 class="text-white font-weight-bold">Apply for Job</h1>
+        <div class="custom-breadcrumbs">
+          <a href="{% url 'jobapp:home' %}">Home</a> <span class="mx-2 slash">/</span>
+          <a href="{% url 'jobapp:job-list' %}">Jobs</a> <span class="mx-2 slash">/</span>
+          <span class="text-white"><strong>Apply</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="site-section">
+  <div class="container">
+    {% include 'messages.html' %}
+    
+    <div class="row align-items-center mb-5">
+      <div class="col-lg-8 mb-4 mb-lg-0">
+        <div class="d-flex align-items-center">
+          <div>
+            <h2>Application Form</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row mb-5">
+      <div class="col-lg-12">
+        <form class="p-4 p-md-5 border rounded" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          
+          {% if form.errors %}
+            {% for field in form %}
+              {% for error in field.errors %}
+                <div class="alert alert-danger">
+                  <strong>{{ error|escape }}</strong>
+                </div>
+              {% endfor %}
+            {% endfor %}
+          {% endif %}
+          
+          <input type="hidden" name="job" id="id_job" value="{{ job.id }}">
+          
+          <div class="row form-group">
+            <div class="col-md-12">
+              <h3 class="text-black mb-4">Video Introduction</h3>
+              <p>Please record a brief video introduction of yourself. This will help the employer get to know you better.</p>
+            </div>
+          </div>
+          
+          <!-- Video capture section -->
+          <div class="row form-group">
+            <div class="col-md-12 text-center mb-4">
+              <div id="videoContainer" style="display: flex; flex-direction: column; align-items: center;">
+                <video id="preview" width="640" height="480" autoplay muted style="background-color: #ddd; margin-bottom: 10px;"></video>
+                <div id="videoControls">
+                  <button type="button" id="startButton" class="btn btn-primary">Start Recording</button>
+                  <button type="button" id="stopButton" class="btn btn-danger" style="display: none;">Stop Recording</button>
+                </div>
+                <p id="timer" class="mt-2" style="display: none; font-weight: bold;">00:00</p>
+              </div>
+              
+              <div id="recordingStatus" class="mt-2" style="display: none;">
+                <div class="spinner-grow text-danger" role="status">
+                  <span class="sr-only">Recording...</span>
+                </div>
+                <span class="ml-2">Recording...</span>
+              </div>
+              
+              <!-- Hidden file input for the recorded video blob -->
+              <div class="mt-3">
+                <input type="file" id="videoInput" name="video" accept="video/*" style="display: none;" required>
+                <div id="videoFeedback" class="mt-2" style="display: none;">
+                  <div class="alert alert-success">
+                    <strong>Video recorded successfully!</strong> 
+                    <a href="#" id="previewRecording">Preview recording</a> | 
+                    <a href="#" id="retakeVideo">Record again</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row form-group">
+            <div class="col-md-12">
+              <p>By submitting this application, you agree that your video introduction will be transcribed using AI technology.</p>
+            </div>
+          </div>
+          
+          <div class="row form-group">
+            <div class="col-md-12">
+              <input type="submit" value="Submit Application" class="btn btn-primary btn-md text-white" id="submitButton" disabled>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    let mediaRecorder;
+    let recordedBlobs = [];
+    let stream;
+    let timerInterval;
+    let seconds = 0;
+    const maxRecordingTime = 120; // 2 minutes in seconds
+    
+    const video = document.getElementById('preview');
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const videoInput = document.getElementById('videoInput');
+    const submitButton = document.getElementById('submitButton');
+    const videoFeedback = document.getElementById('videoFeedback');
+    const recordingStatus = document.getElementById('recordingStatus');
+    const timerElement = document.getElementById('timer');
+    const previewRecording = document.getElementById('previewRecording');
+    const retakeVideo = document.getElementById('retakeVideo');
+    
+    // Setup the camera when the start button is clicked
+    startButton.addEventListener('click', async () => {
+      try {
+        const constraints = {
+          audio: true,
+          video: {
+            width: 640,
+            height: 480
+          }
+        };
+        
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        
+        // Determine supported mime types
+        let mimeType = 'video/webm';
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+          mimeType = 'video/webm;codecs=vp9';
+        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+          mimeType = 'video/webm;codecs=vp8';
+        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+          mimeType = 'video/mp4';
+        }
+        
+        // Setup media recorder with proper options
+        const options = { mimeType };
+        mediaRecorder = new MediaRecorder(stream, options);
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            recordedBlobs.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = () => {
+          // Create a Blob from the recorded chunks
+          const blob = new Blob(recordedBlobs, { type: mimeType });
+          
+          // Create a file from the blob
+          const fileName = `recorded-video-${new Date().toISOString()}.webm`;
+          const videoFile = new File([blob], fileName, { type: mimeType });
+          
+          // Create a FileList-like object to set the files property
+          try {
+            // Modern browsers support DataTransfer
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(videoFile);
+            videoInput.files = dataTransfer.files;
+          } catch (e) {
+            console.error('DataTransfer not supported, using direct assignment', e);
+            // Fall back to direct assignment (might not work in all browsers)
+            videoInput.file = videoFile;
+          }
+          
+          // Show feedback and enable submit button
+          videoFeedback.style.display = 'block';
+          submitButton.disabled = false;
+          
+          // Hide recording status
+          recordingStatus.style.display = 'none';
+          
+          // For debugging - verify file was attached
+          console.log('Video attached to form:', videoInput.files[0]);
+        };
+        
+        // Clear any previous recordings
+        recordedBlobs = [];
+        
+        // Start recording
+        mediaRecorder.start(100); // Collect data in 100ms chunks
+        
+        // Start timer
+        seconds = 0;
+        timerElement.textContent = '00:00';
+        timerElement.style.display = 'block';
+        timerInterval = setInterval(updateTimer, 1000);
+        
+        // Update UI
+        startButton.style.display = 'none';
+        stopButton.style.display = 'inline-block';
+        recordingStatus.style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error accessing media devices:', error);
+        alert('Error accessing camera or microphone. Please make sure your browser has permission to use these devices.');
+      }
+    });
+    
+    // Stop recording when the stop button is clicked
+    stopButton.addEventListener('click', () => {
+      stopRecording();
+    });
+    
+    // Preview recording
+    previewRecording.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Create a video element to play the recording
+      const recordedVideo = document.createElement('video');
+      recordedVideo.controls = true;
+      recordedVideo.style.maxWidth = '100%';
+      recordedVideo.style.marginTop = '10px';
+      
+      // Create a new blob from the recorded data
+      const blob = new Blob(recordedBlobs, { type: 'video/webm' });
+      recordedVideo.src = URL.createObjectURL(blob);
+      
+      // Remove any previous recordings
+      const oldVideo = document.querySelector('#videoContainer .recorded-video');
+      if (oldVideo) {
+        oldVideo.remove();
+      }
+      
+      // Add the class for future reference
+      recordedVideo.className = 'recorded-video';
+      
+      // Append to the container
+      document.getElementById('videoContainer').appendChild(recordedVideo);
+    });
+    
+    // Record again
+    retakeVideo.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Reset
+      recordedBlobs = [];
+      videoFeedback.style.display = 'none';
+      submitButton.disabled = true;
+      
+      // Remove any previous recordings
+      const oldVideo = document.querySelector('#videoContainer .recorded-video');
+      if (oldVideo) {
+        oldVideo.remove();
+      }
+      
+      // Ensure the video input is cleared
+      try {
+        const dataTransfer = new DataTransfer();
+        videoInput.files = dataTransfer.files;
+      } catch (e) {
+        console.error('DataTransfer not supported for clearing', e);
+        // Try direct approach
+        videoInput.value = '';
+      }
+      
+      // Show the start button again
+      startButton.style.display = 'inline-block';
+    });
+    
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        // Stop the recording
+        mediaRecorder.stop();
+        
+        // Stop the timer
+        clearInterval(timerInterval);
+        
+        // Stop all tracks on the stream
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Reset the video element
+        video.srcObject = null;
+        
+        // Update UI
+        stopButton.style.display = 'none';
+        timerElement.style.display = 'none';
+      }
+    }
+    
+    function updateTimer() {
+      seconds++;
+      
+      // Format seconds to MM:SS
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+      
+      // Auto-stop recording after max time
+      if (seconds >= maxRecordingTime) {
+        stopRecording();
+      }
+    }
+  });
+</script>
+{% endblock %} 
