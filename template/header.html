@@ -43,7 +43,7 @@
                     <li>
                       <a href="{% url 'jobapp:dashboard' %}">Dashboard</a> 
                       </li>
-                  
+                    
                     <li class="pr-3 has-children">
                       <a class="text-primary">
                         {{request.user.first_name}}</a>
@@ -64,6 +64,10 @@
                 <li>
                   <a href="{% url 'jobapp:dashboard' %}">Dashboard</a> 
                   </li>
+
+                {% if user.is_staff or user.is_superuser %}
+                <!-- Interview Questions menu item removed for staff/admin -->
+                {% endif %}
 
                 <li class="pr-3 has-children">
                   <a class="text-primary">
