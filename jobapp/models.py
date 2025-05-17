@@ -58,12 +58,27 @@ class Applicant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now=True)
-    video = models.FileField(upload_to='applicant_videos/', null=True, blank=True)
+    video = models.FileField(upload_to='applicant_videos/', verbose_name='Introduction Video')
     transcription = models.TextField(null=True, blank=True)
     similarity_score = models.FloatField(null=True, blank=True)  # To store similarity score
 
     def __str__(self):
-        return self.job.title
+        return f"{self.user.username}'s application for {self.job.title}"
+
+class QuestionResponse(models.Model):
+    """Model to store individual video responses for each question"""
+    applicant = models.ForeignKey(Applicant, related_name='question_responses', on_delete=models.CASCADE)
+    question_id = models.CharField(max_length=100)  # ID of the question (from JobQuestion model)
+    question_text = models.TextField()  # Text of the question
+    video = models.FileField(upload_to='question_responses/', null=True, blank=True)
+    transcription = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Response to question {self.question_id} by {self.applicant.user.username}"
+    
+    class Meta:
+        unique_together = ['applicant', 'question_id']  # One response per question per applicant
 
 class BookmarkJob(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

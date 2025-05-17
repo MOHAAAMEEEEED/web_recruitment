@@ -258,11 +258,11 @@ class JobForm(forms.ModelForm):
 class JobApplyForm(forms.ModelForm):
     class Meta:
         model = Applicant
-        fields = ['job', 'video']
+        fields = ['job']
         
     def __init__(self, *args, **kwargs):
         super(JobApplyForm, self).__init__(*args, **kwargs)
-        self.fields['video'].required = True
+        # No video field required here as we'll collect videos for each question
 
 
 class JobBookmarkForm(forms.ModelForm):

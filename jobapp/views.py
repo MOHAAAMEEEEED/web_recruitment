@@ -289,7 +289,7 @@ def apply_job_view(request, id):
             instance.save()
 
             try:
-                # Process the intro video for similarity score
+                # Process the intro video
                 intro_video = request.FILES.get('video_intro')
                 
                 # Save the video to the instance
@@ -307,64 +307,46 @@ def apply_job_view(request, id):
                 instance.similarity_score = similarity_score
                 instance.save()
                 
-                # Import JobQuestion and ApplicantAnswer only if needed
-                try:
-                    from question_generation.models import JobQuestion, ApplicantAnswer
-                    from question_generation.utils import generate_questions_for_job
-                    
-                    # Get or generate questions for this job
-                    questions = JobQuestion.objects.filter(job=job)
-                    if not questions.exists():
-                        questions = generate_questions_for_job(job)
-                    
-                    # Process additional question videos if they exist
-                    for key, file in request.FILES.items():
-                        # Skip the intro video which we already processed
-                        if key == 'video_intro':
-                            continue
-                            
-                        if key.startswith('video_'):
-                            # Extract the question ID from the field name (video_skill1, video_final, etc.)
-                            question_id = key.replace('video_', '')
-                            
-                            # Find the corresponding question
-                            if question_id == 'intro':
-                                # Already handled the intro
-                                continue
-                                
-                            # Look for questions with IDs containing the question_id
-                            matching_questions = questions.filter(id__contains=question_id)
-                            
-                            if not matching_questions.exists():
-                                # If no exact match, look for questions with similar skill related field
-                                matching_questions = questions.filter(skill_related__icontains=question_id)
-                            
-                            # If we found a matching question, save the answer
-                            if matching_questions.exists():
-                                question = matching_questions.first()
-                                
-                                # Create answer record
-                                answer = ApplicantAnswer(
-                                    applicant=instance,
-                                    question=question,
-                                    audio_file=file
-                                )
-                                answer.save()
-                                
-                                # Transcribe the answer
-                                try:
-                                    answer_result = transcriber.transcribe(answer.audio_file.path)
-                                    answer_transcription = answer_result.get('text', '')
-                                    
-                                    # Save the transcription
-                                    answer.answer_text = answer_transcription
-                                    answer.transcription = answer_transcription
-                                    answer.save()
-                                except Exception as e:
-                                    print(f"Error transcribing answer for question {question_id}: {str(e)}")
-                except ImportError:
-                    # Question generation module not available
-                    pass
+                # Process question response videos
+                for key, file in request.FILES.items():
+                    # Skip the intro video which we already processed
+                    if key == 'video_intro':
+                        continue
+                        
+                    if key.startswith('video_'):
+                        # Extract the question ID from the field name (video_skill1, video_final, etc.)
+                        question_id = key.replace('video_', '')
+                        
+                        # Try to find the question text
+                        question_text = ""
+                        try:
+                            from question_generation.models import JobQuestion
+                            questions = JobQuestion.objects.filter(job=job)
+                            for q in questions:
+                                if str(q.id) in question_id or (q.skill_related and q.skill_related.lower() in question_id.lower()):
+                                    question_text = q.question_text
+                                    break
+                        except:
+                            # Fallback if we can't find the question
+                            question_text = f"Question {question_id}"
+                        
+                        # Create a new QuestionResponse record
+                        question_response = QuestionResponse(
+                            applicant=instance,
+                            question_id=question_id,
+                            question_text=question_text,
+                            video=file
+                        )
+                        question_response.save()
+                        
+                        # Transcribe the question response video
+                        try:
+                            response_result = transcriber.transcribe(question_response.video.path)
+                            response_transcription = response_result.get('text', '')
+                            question_response.transcription = response_transcription
+                            question_response.save()
+                        except Exception as e:
+                            print(f"Error transcribing response for question {question_id}: {str(e)}")
 
                 messages.success(request, 'You have successfully applied for this job!')
                 return redirect(reverse("jobapp:single-job", kwargs={'id': id}))
@@ -380,17 +362,25 @@ def apply_job_view(request, id):
     else:
         form = JobApplyForm(initial={'job': job.id})
 
-    # Try to get questions for this job
+    # Generate or get questions for this job
     questions = []
     try:
         from question_generation.models import JobQuestion
         from question_generation.utils import generate_questions_for_job
         
-        # Get or generate questions for this job
+        # Get questions for this job
         db_questions = JobQuestion.objects.filter(job=job)
+        
+        # If no questions exist, generate them
         if not db_questions.exists():
-            db_questions = generate_questions_for_job(job)
-            
+            print("No questions found for job, generating new questions...")
+            try:
+                db_questions = generate_questions_for_job(job)
+                print(f"Generated {db_questions.count()} questions")
+            except Exception as e:
+                print(f"Error generating questions: {str(e)}")
+                db_questions = JobQuestion.objects.none()
+        
         # Convert to a format usable in the template
         for q in db_questions:
             question_type = 'general' if q.is_general else 'skill'
@@ -402,15 +392,26 @@ def apply_job_view(request, id):
                 'type': question_type,
                 'skill': q.skill_related or ''
             })
-    except ImportError:
+            
+        print(f"Prepared {len(questions)} questions for the template")
+    except ImportError as e:
+        print(f"Error importing question generation modules: {str(e)}")
         # Question generation module not available
-        pass
+        questions = []
+    except Exception as e:
+        print(f"Unexpected error in question generation: {str(e)}")
+        questions = []
         
     # Convert questions to JSON for the template
-    questions_json = json.dumps(questions)
+    try:
+        questions_json = json.dumps(questions)
+        print(f"JSON encoded questions: {len(questions_json)} chars")
+    except Exception as e:
+        print(f"Error encoding questions to JSON: {str(e)}")
+        questions_json = "[]"
         
     return render(request, 'jobapp/apply_job.html', {
-        'form': form, 
+        'form': form,
         'job': job,
         'questions_json': questions_json
     })

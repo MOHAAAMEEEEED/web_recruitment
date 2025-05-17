@@ -53,17 +53,17 @@
           <div class="row form-group mb-4">
             <div class="col-md-12">
               <h3 class="text-black mb-4">Interview Questions</h3>
-              <p>Please record a video answering each of the following questions. This will help the employer evaluate your candidacy better.</p>
+              <p>Please record a video for each question. You must record an introduction video to submit your application.</p>
               <div class="progress mb-3">
-                <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progress-bar">0%</div>
+                <div class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progress-bar">0%</div>
               </div>
             </div>
           </div>
           
           <!-- Interview Questions Section -->
           <div id="questions-container">
-            <!-- Questions will be loaded and displayed here -->
-            <div class="question-card card mb-4" id="intro-question" data-question-type="intro">
+            <!-- Introduction question - this is fixed -->
+            <div class="question-card card mb-4" id="intro-question" data-question-index="0">
               <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">Question 1: Self Introduction</h5>
               </div>
@@ -91,97 +91,45 @@
                       <a href="#" class="retake-video-link">Record again</a>
                     </div>
                   </div>
-                  <input type="file" name="video_intro" class="video-input" accept="video/*" style="display: none;" required>
+                  <input type="file" name="video_intro" class="video-input" accept="video/*" style="display: none;">
                 </div>
                 
                 <div class="navigation-buttons text-right">
-                  <button type="button" class="btn btn-primary next-button" disabled>Next Question</button>
+                  <button type="button" class="btn btn-primary next-button">Next Question</button>
                 </div>
               </div>
             </div>
             
-            <!-- Template for skill questions - will be cloned by JavaScript -->
-            <div class="question-card card mb-4" id="skill-question-template" style="display: none;" data-question-type="skill">
-              <div class="card-header bg-success text-white">
-                <h5 class="mb-0 question-title"></h5>
-              </div>
-              <div class="card-body">
-                <p class="question-text mb-4"></p>
-                
-                <!-- Video capture section -->
-                <div class="video-section text-center mb-4">
-                  <video class="preview-video" width="640" height="480" autoplay muted style="background-color: #ddd; margin-bottom: 10px;"></video>
-                  <div class="video-controls">
-                    <button type="button" class="btn btn-primary start-button">Start Recording</button>
-                    <button type="button" class="btn btn-danger stop-button" style="display: none;">Stop Recording</button>
-                  </div>
-                  <p class="timer mt-2" style="display: none; font-weight: bold;">00:00</p>
-                  <div class="recording-status mt-2" style="display: none;">
-                    <div class="spinner-grow text-danger" role="status">
-                      <span class="sr-only">Recording...</span>
-                    </div>
-                    <span class="ml-2">Recording...</span>
-                  </div>
-                  <div class="video-feedback mt-2" style="display: none;">
-                    <div class="alert alert-success">
-                      <strong>Video recorded successfully!</strong> 
-                      <a href="#" class="preview-recording-link">Preview recording</a> | 
-                      <a href="#" class="retake-video-link">Record again</a>
-                    </div>
-                  </div>
-                  <input type="file" class="video-input" accept="video/*" style="display: none;" required>
-                </div>
-                
-                <div class="navigation-buttons text-right">
-                  <button type="button" class="btn btn-secondary prev-button">Previous Question</button>
-                  <button type="button" class="btn btn-primary next-button" disabled>Next Question</button>
-                </div>
-              </div>
-            </div>
+            <!-- Dynamic questions will be inserted here by JavaScript -->
             
-            <!-- Final question template - will be cloned by JavaScript -->
-            <div class="question-card card mb-4" id="final-question-template" style="display: none;" data-question-type="final">
+            <!-- Final submit section (always the last card) -->
+            <div class="question-card card mb-4" id="final-submit" style="display: none;">
               <div class="card-header bg-info text-white">
-                <h5 class="mb-0 question-title"></h5>
+                <h5 class="mb-0">Submit Your Application</h5>
               </div>
               <div class="card-body">
-                <p class="question-text mb-4"></p>
+                <p class="mb-4">You've answered all the questions. Please review your answers and submit your application when ready.</p>
                 
-                <!-- Video capture section -->
-                <div class="video-section text-center mb-4">
-                  <video class="preview-video" width="640" height="480" autoplay muted style="background-color: #ddd; margin-bottom: 10px;"></video>
-                  <div class="video-controls">
-                    <button type="button" class="btn btn-primary start-button">Start Recording</button>
-                    <button type="button" class="btn btn-danger stop-button" style="display: none;">Stop Recording</button>
-                  </div>
-                  <p class="timer mt-2" style="display: none; font-weight: bold;">00:00</p>
-                  <div class="recording-status mt-2" style="display: none;">
-                    <div class="spinner-grow text-danger" role="status">
-                      <span class="sr-only">Recording...</span>
-                    </div>
-                    <span class="ml-2">Recording...</span>
-                  </div>
-                  <div class="video-feedback mt-2" style="display: none;">
-                    <div class="alert alert-success">
-                      <strong>Video recorded successfully!</strong> 
-                      <a href="#" class="preview-recording-link">Preview recording</a> | 
-                      <a href="#" class="retake-video-link">Record again</a>
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="alert alert-info">
+                      <p class="mb-0">By submitting this application, you agree that your video answers will be transcribed using AI technology.</p>
                     </div>
                   </div>
-                  <input type="file" class="video-input" accept="video/*" style="display: none;" required>
                 </div>
                 
                 <div class="navigation-buttons text-right">
                   <button type="button" class="btn btn-secondary prev-button">Previous Question</button>
-                  <button type="submit" class="btn btn-success submit-button" id="submitButton" disabled>Submit Application</button>
+                  <button type="submit" class="btn btn-success btn-lg" id="submitButton">Submit Application</button>
                 </div>
               </div>
             </div>
           </div>
           
-          <div class="row form-group">
-            <div class="col-md-12">
-              <p>By submitting this application, you agree that your video answers will be transcribed using AI technology.</p>
+          <!-- Fixed submit button at the bottom for accessibility -->
+          <div class="row form-group mt-4">
+            <div class="col-md-12 text-center">
+              <button type="submit" class="btn btn-lg btn-primary">Submit Application</button>
             </div>
           </div>
         </form>
@@ -193,227 +141,274 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- Pass server questions data to JavaScript -->
-<script type="text/javascript">
-  // Server-provided questions
-  var serverQuestions = {% if questions_json %}{{ questions_json|safe }}{% else %}[]{% endif %};
+<!-- Initialize server questions as JSON data directly from Django -->
+<script id="questionsData" type="application/json">
+  {{ questions_json|default:"[]"|safe }}
 </script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    console.log("Document loaded");
+    
+    // Load questions from the JSON data element
+    var serverQuestions = [];
+    try {
+      const questionsDataElement = document.getElementById('questionsData');
+      if (questionsDataElement && questionsDataElement.textContent.trim()) {
+        serverQuestions = JSON.parse(questionsDataElement.textContent);
+        console.log("Loaded questions from server:", serverQuestions);
+      }
+    } catch(e) {
+      console.error("Error parsing questions:", e);
+    }
+    
     // Constants
     const MAX_RECORDING_TIME = 120; // 2 minutes in seconds
     
-    // Application questions - Use server-provided questions if available, otherwise use defaults
-    let interviewQuestions = [
-      { id: 'intro', text: 'Please introduce yourself and explain why you\'re interested in this position.', type: 'intro', title: 'Question 1: Self Introduction' },
-      { id: 'skill1', text: 'What are your strongest technical skills relevant to this position?', type: 'skill', title: 'Question 2: Technical Skills' },
-      { id: 'skill2', text: 'Describe a challenging project you worked on and how you overcame obstacles.', type: 'skill', title: 'Question 3: Problem Solving' },
-      { id: 'skill3', text: 'How do you handle tight deadlines and pressure?', type: 'skill', title: 'Question 4: Work Style' },
-      { id: 'final', text: 'Do you have any questions about the role or additional information you\'d like to share?', type: 'final', title: 'Question 5: Final Thoughts' }
+    // Default questions to use if server doesn't provide any
+    const defaultQuestions = [
+      { id: 'skill1', text: 'What are your strongest technical skills relevant to this position?', type: 'skill' },
+      { id: 'skill2', text: 'Describe a challenging project you worked on and how you overcame obstacles.', type: 'skill' },
+      { id: 'skill3', text: 'How do you handle tight deadlines and pressure?', type: 'skill' },
+      { id: 'skill4', text: 'What is your greatest professional achievement?', type: 'skill' },
+      { id: 'skill5', text: 'Where do you see yourself in five years?', type: 'skill' }
     ];
     
-    // Use server-provided questions if available
-    if (serverQuestions.length > 0) {
-      // Map server questions to the format we need
-      const mappedQuestions = serverQuestions.map((q, index) => {
-        let type = 'skill';
-        if (index === 0) type = 'intro';
-        if (index === serverQuestions.length - 1) type = 'final';
-        
-        return {
-          id: q.id,
-          text: q.text,
-          type: type,
-          title: `Question ${index + 1}: ${q.skill || 'General'}`,
-          skill: q.skill
-        };
-      });
-      
-      // Add intro question if not present
-      if (!mappedQuestions.find(q => q.type === 'intro')) {
-        mappedQuestions.unshift(interviewQuestions[0]);
-      }
-      
-      // Add final question if not present
-      if (!mappedQuestions.find(q => q.type === 'final')) {
-        mappedQuestions.push(interviewQuestions[interviewQuestions.length - 1]);
-      }
-      
-      interviewQuestions = mappedQuestions;
-    }
+    // Use server questions or default to our predefined ones
+    let interviewQuestions = serverQuestions.length > 0 ? serverQuestions : defaultQuestions;
     
-    const TOTAL_QUESTIONS = interviewQuestions.length;
-    
-    // Track current question
+    // Initialize state
     let currentQuestionIndex = 0;
     let recordedQuestions = new Set();
+    const form = document.getElementById('applicationForm');
+    const questionsContainer = document.getElementById('questions-container');
+    const progressBar = document.getElementById('progress-bar');
     
-    // Setup questions
-    setupQuestions();
-    updateQuestionVisibility();
+    // Generate question cards for all the questions
+    generateQuestionCards();
+    
+    // Get all question cards (after generation)
+    const questionCards = document.querySelectorAll('.question-card');
+    const totalQuestions = questionCards.length;
+    
+    // Set up event listeners for all cards
+    setupAllEventListeners();
+    
+    // Update the progress bar
     updateProgressBar();
     
-    // Function to set up questions in the DOM
-    function setupQuestions() {
-      const questionsContainer = document.getElementById('questions-container');
-      const skillTemplate = document.getElementById('skill-question-template');
-      const finalTemplate = document.getElementById('final-question-template');
+    // Function to generate question cards for the dynamic questions
+    function generateQuestionCards() {
+      // The intro question is already in the DOM
       
-      // Start with the intro question - already in the DOM
-      
-      // Add skill questions
-      for (let i = 1; i < interviewQuestions.length - 1; i++) {
-        const question = interviewQuestions[i];
-        const newQuestion = skillTemplate.cloneNode(true);
+      // Generate cards for each of the interview questions
+      interviewQuestions.forEach((question, index) => {
+        // Create new question card
+        const questionCard = createQuestionCard(question, index + 1); // +1 because intro is question 0
         
-        newQuestion.id = `question-${question.id}`;
-        newQuestion.style.display = 'none';
-        newQuestion.querySelector('.question-title').textContent = question.title;
-        newQuestion.querySelector('.question-text').textContent = question.text;
-        newQuestion.querySelector('.video-input').name = `video_${question.id}`;
-        newQuestion.setAttribute('data-question-index', i);
-        
-        questionsContainer.appendChild(newQuestion);
-      }
+        // Add to container before the final submit card
+        const finalSubmit = document.getElementById('final-submit');
+        questionsContainer.insertBefore(questionCard, finalSubmit);
+      });
       
-      // Add final question
-      const finalQuestion = interviewQuestions[interviewQuestions.length - 1];
-      const newFinalQuestion = finalTemplate.cloneNode(true);
-      
-      newFinalQuestion.id = `question-${finalQuestion.id}`;
-      newFinalQuestion.style.display = 'none';
-      newFinalQuestion.querySelector('.question-title').textContent = finalQuestion.title;
-      newFinalQuestion.querySelector('.question-text').textContent = finalQuestion.text;
-      newFinalQuestion.querySelector('.video-input').name = `video_${finalQuestion.id}`;
-      newFinalQuestion.setAttribute('data-question-index', interviewQuestions.length - 1);
-      
-      questionsContainer.appendChild(newFinalQuestion);
-      
-      // Set up event listeners for all questions
-      setupQuestionEventListeners();
+      // Update the data-question-index for the final submit card
+      document.getElementById('final-submit').setAttribute('data-question-index', interviewQuestions.length + 1);
     }
     
-    // Set up event listeners for all questions
-    function setupQuestionEventListeners() {
-      // Start buttons
-      document.querySelectorAll('.start-button').forEach(button => {
-        button.addEventListener('click', function() {
-          const questionCard = this.closest('.question-card');
-          startRecording(questionCard);
-        });
-      });
+    // Function to create a question card element
+    function createQuestionCard(question, index) {
+      // Create the card element
+      const card = document.createElement('div');
+      card.className = 'question-card card mb-4';
+      card.id = `question-${question.id}`;
+      card.setAttribute('data-question-index', index);
+      card.style.display = 'none';
       
-      // Stop buttons
-      document.querySelectorAll('.stop-button').forEach(button => {
-        button.addEventListener('click', function() {
-          const questionCard = this.closest('.question-card');
-          stopRecording(questionCard);
-        });
-      });
+      // Set the card content
+      card.innerHTML = `
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Question ${index + 1}: ${question.skill || 'General'}</h5>
+        </div>
+        <div class="card-body">
+          <p class="question-text mb-4">${question.text}</p>
+          
+          <!-- Video capture section -->
+          <div class="video-section text-center mb-4">
+            <video class="preview-video" width="640" height="480" autoplay muted style="background-color: #ddd; margin-bottom: 10px;"></video>
+            <div class="video-controls">
+              <button type="button" class="btn btn-primary start-button">Start Recording</button>
+              <button type="button" class="btn btn-danger stop-button" style="display: none;">Stop Recording</button>
+            </div>
+            <p class="timer mt-2" style="display: none; font-weight: bold;">00:00</p>
+            <div class="recording-status mt-2" style="display: none;">
+              <div class="spinner-grow text-danger" role="status">
+                <span class="sr-only">Recording...</span>
+              </div>
+              <span class="ml-2">Recording...</span>
+            </div>
+            <div class="video-feedback mt-2" style="display: none;">
+              <div class="alert alert-success">
+                <strong>Video recorded successfully!</strong> 
+                <a href="#" class="preview-recording-link">Preview recording</a> | 
+                <a href="#" class="retake-video-link">Record again</a>
+              </div>
+            </div>
+            <input type="file" name="video_${question.id}" class="video-input" accept="video/*" style="display: none;">
+          </div>
+          
+          <div class="navigation-buttons text-right">
+            <button type="button" class="btn btn-secondary prev-button">Previous Question</button>
+            <button type="button" class="btn btn-primary next-button">Next Question</button>
+          </div>
+        </div>
+      `;
       
-      // Preview links
-      document.querySelectorAll('.preview-recording-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const questionCard = this.closest('.question-card');
-          previewRecording(questionCard);
-        });
-      });
-      
-      // Retake links
-      document.querySelectorAll('.retake-video-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const questionCard = this.closest('.question-card');
-          retakeVideo(questionCard);
-        });
-      });
-      
-      // Next buttons
-      document.querySelectorAll('.next-button').forEach(button => {
-        button.addEventListener('click', function() {
-          const questionCard = this.closest('.question-card');
-          const questionIndex = parseInt(questionCard.getAttribute('data-question-index') || '0');
-          goToQuestion(questionIndex + 1);
-        });
-      });
-      
-      // Previous buttons
-      document.querySelectorAll('.prev-button').forEach(button => {
-        button.addEventListener('click', function() {
-          const questionCard = this.closest('.question-card');
-          const questionIndex = parseInt(questionCard.getAttribute('data-question-index') || '0');
-          goToQuestion(questionIndex - 1);
-        });
-      });
+      return card;
     }
     
-    // Show only the current question
-    function updateQuestionVisibility() {
-      document.querySelectorAll('.question-card').forEach((card, index) => {
-        if (index === currentQuestionIndex) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
+    // Set up event listeners for all question cards
+    function setupAllEventListeners() {
+      // Form submit event
+      form.addEventListener('submit', function(e) {
+        console.log("Form submit triggered");
+        
+        // Check if intro video is recorded
+        const introInput = document.querySelector('input[name="video_intro"]');
+        if (!introInput.files || introInput.files.length === 0) {
+          e.preventDefault();
+          alert('You must record an introduction video before submitting.');
+          goToQuestion(0); // Go to intro question
         }
       });
       
-      // Update hidden input with current question
+      // Next/previous navigation buttons
+      document.querySelectorAll('.next-button').forEach(button => {
+        button.addEventListener('click', function() {
+          const card = this.closest('.question-card');
+          const index = parseInt(card.getAttribute('data-question-index'));
+          goToQuestion(index + 1);
+        });
+      });
+      
+      document.querySelectorAll('.prev-button').forEach(button => {
+        button.addEventListener('click', function() {
+          const card = this.closest('.question-card');
+          const index = parseInt(card.getAttribute('data-question-index'));
+          goToQuestion(index - 1);
+        });
+      });
+      
+      // Video recording buttons
+      document.querySelectorAll('.start-button').forEach(button => {
+        button.addEventListener('click', function() {
+          const card = this.closest('.question-card');
+          startRecording(card);
+        });
+      });
+      
+      document.querySelectorAll('.stop-button').forEach(button => {
+        button.addEventListener('click', function() {
+          const card = this.closest('.question-card');
+          stopRecording(card);
+        });
+      });
+      
+      // Preview and retake links
+      document.querySelectorAll('.preview-recording-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const card = this.closest('.question-card');
+          previewRecording(card);
+        });
+      });
+      
+      document.querySelectorAll('.retake-video-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const card = this.closest('.question-card');
+          retakeVideo(card);
+        });
+      });
+    }
+    
+    // Navigate to a specific question
+    function goToQuestion(index) {
+      // Validate index
+      if (index < 0 || index >= totalQuestions) return;
+      
+      // Hide current question
+      questionCards[currentQuestionIndex].style.display = 'none';
+      
+      // Show new question
+      currentQuestionIndex = index;
+      questionCards[currentQuestionIndex].style.display = 'block';
+      
+      // Update progress
+      updateProgressBar();
       document.getElementById('current_question').value = currentQuestionIndex;
+      
+      // Scroll to top of form
+      form.scrollIntoView({ behavior: 'smooth' });
     }
     
     // Update progress bar
     function updateProgressBar() {
-      const progressPercent = Math.round((currentQuestionIndex / (interviewQuestions.length - 1)) * 100);
-      const progressBar = document.getElementById('progress-bar');
-      progressBar.style.width = `${progressPercent}%`;
-      progressBar.setAttribute('aria-valuenow', progressPercent);
-      progressBar.textContent = `${progressPercent}%`;
-    }
-    
-    // Go to specific question
-    function goToQuestion(index) {
-      if (index >= 0 && index < interviewQuestions.length) {
-        currentQuestionIndex = index;
-        updateQuestionVisibility();
-        updateProgressBar();
-      }
-    }
-    
-    // Start recording for a specific question card
-    function startRecording(questionCard) {
-      const videoElement = questionCard.querySelector('.preview-video');
-      const startButton = questionCard.querySelector('.start-button');
-      const stopButton = questionCard.querySelector('.stop-button');
-      const recordingStatus = questionCard.querySelector('.recording-status');
-      const timerElement = questionCard.querySelector('.timer');
+      // Calculate percentage (remove the final card from calculation)
+      const maxIndex = totalQuestions - 1;
+      const percent = Math.round((currentQuestionIndex / maxIndex) * 100);
       
+      // Update the progress bar
+      progressBar.style.width = percent + '%';
+      progressBar.setAttribute('aria-valuenow', percent);
+      progressBar.textContent = percent + '%';
+    }
+    
+    // Start recording
+    function startRecording(card) {
+      const videoElement = card.querySelector('.preview-video');
+      const startButton = card.querySelector('.start-button');
+      const stopButton = card.querySelector('.stop-button');
+      const recordingStatus = card.querySelector('.recording-status');
+      const timerElement = card.querySelector('.timer');
+      
+      // Request camera and mic access
       navigator.mediaDevices.getUserMedia({ audio: true, video: true })
         .then(stream => {
-          // Store stream in the card for later access
-          questionCard.stream = stream;
+          // Store stream in the card
+          card.stream = stream;
           videoElement.srcObject = stream;
           
           // Setup recorder
           const mimeType = getSupportedMimeType();
-          questionCard.mediaRecorder = new MediaRecorder(stream, { mimeType });
-          questionCard.recordedChunks = [];
+          card.mediaRecorder = new MediaRecorder(stream, { mimeType });
+          card.recordedChunks = [];
           
-          questionCard.mediaRecorder.ondataavailable = event => {
+          card.mediaRecorder.ondataavailable = event => {
             if (event.data.size > 0) {
-              questionCard.recordedChunks.push(event.data);
+              card.recordedChunks.push(event.data);
             }
           };
           
           // Start recording
-          questionCard.mediaRecorder.start(100);
+          card.mediaRecorder.start(100);
           
           // Start timer
-          questionCard.seconds = 0;
+          card.seconds = 0;
           timerElement.textContent = '00:00';
           timerElement.style.display = 'block';
-          questionCard.timerInterval = setInterval(() => updateQuestionTimer(questionCard), 1000);
+          
+          card.timerInterval = setInterval(() => {
+            // Update timer
+            card.seconds++;
+            const minutes = Math.floor(card.seconds / 60);
+            const seconds = card.seconds % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Auto-stop after max time
+            if (card.seconds >= MAX_RECORDING_TIME) {
+              stopRecording(card);
+            }
+          }, 1000);
           
           // Update UI
           startButton.style.display = 'none';
@@ -426,36 +421,26 @@
         });
     }
     
-    // Stop recording for a specific question card
-    function stopRecording(questionCard) {
-      const videoElement = questionCard.querySelector('.preview-video');
-      const startButton = questionCard.querySelector('.start-button');
-      const stopButton = questionCard.querySelector('.stop-button');
-      const recordingStatus = questionCard.querySelector('.recording-status');
-      const timerElement = questionCard.querySelector('.timer');
-      const videoInput = questionCard.querySelector('.video-input');
-      const videoFeedback = questionCard.querySelector('.video-feedback');
-      const nextButton = questionCard.querySelector('.next-button');
-      const submitButton = questionCard.querySelector('.submit-button');
+    // Stop recording
+    function stopRecording(card) {
+      const videoElement = card.querySelector('.preview-video');
+      const startButton = card.querySelector('.start-button');
+      const stopButton = card.querySelector('.stop-button');
+      const recordingStatus = card.querySelector('.recording-status');
+      const timerElement = card.querySelector('.timer');
+      const videoInput = card.querySelector('.video-input');
+      const videoFeedback = card.querySelector('.video-feedback');
       
-      if (questionCard.mediaRecorder && questionCard.mediaRecorder.state !== 'inactive') {
+      if (card.mediaRecorder && card.mediaRecorder.state !== 'inactive') {
         // Stop the recording
-        questionCard.mediaRecorder.stop();
+        card.mediaRecorder.stop();
         
         // Stop the timer
-        clearInterval(questionCard.timerInterval);
-        
-        // Get question ID
-        const questionId = questionCard.id.replace('question-', '');
-        if (questionId === 'intro-question') {
-          recordedQuestions.add('intro');
-        } else {
-          recordedQuestions.add(questionId);
-        }
+        clearInterval(card.timerInterval);
         
         // Create a file from the recorded data
-        const blob = new Blob(questionCard.recordedChunks, { type: getSupportedMimeType() });
-        const fileName = `question_${questionId}_${new Date().toISOString()}.webm`;
+        const blob = new Blob(card.recordedChunks, { type: getSupportedMimeType() });
+        const fileName = `question_${card.id}_${new Date().toISOString()}.webm`;
         const videoFile = new File([blob], fileName, { type: getSupportedMimeType() });
         
         // Attach to form
@@ -465,12 +450,16 @@
           videoInput.files = dataTransfer.files;
         } catch (e) {
           console.error('DataTransfer not supported:', e);
+          // Fallback
           videoInput.file = videoFile;
         }
         
+        // Mark as recorded
+        recordedQuestions.add(card.id);
+        
         // Stop tracks
-        if (questionCard.stream) {
-          questionCard.stream.getTracks().forEach(track => track.stop());
+        if (card.stream) {
+          card.stream.getTracks().forEach(track => track.stop());
         }
         
         // Update UI
@@ -479,70 +468,44 @@
         recordingStatus.style.display = 'none';
         timerElement.style.display = 'none';
         videoFeedback.style.display = 'block';
-        
-        // Enable navigation
-        if (nextButton) {
-          nextButton.disabled = false;
-        }
-        
-        // Check if it's the final question
-        if (submitButton) {
-          submitButton.disabled = false;
-        }
-      }
-    }
-    
-    // Update timer for a question
-    function updateQuestionTimer(questionCard) {
-      const timerElement = questionCard.querySelector('.timer');
-      questionCard.seconds++;
-      
-      // Format time
-      const minutes = Math.floor(questionCard.seconds / 60);
-      const seconds = questionCard.seconds % 60;
-      timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      
-      // Auto-stop after max time
-      if (questionCard.seconds >= MAX_RECORDING_TIME) {
-        stopRecording(questionCard);
       }
     }
     
     // Preview recording
-    function previewRecording(questionCard) {
-      const blob = new Blob(questionCard.recordedChunks, { type: getSupportedMimeType() });
+    function previewRecording(card) {
+      if (!card.recordedChunks || card.recordedChunks.length === 0) return;
+      
+      const blob = new Blob(card.recordedChunks, { type: getSupportedMimeType() });
       const url = URL.createObjectURL(blob);
       
       // Remove existing preview
-      const oldPreview = questionCard.querySelector('.recorded-preview');
+      const oldPreview = card.querySelector('.recorded-preview');
       if (oldPreview) {
         oldPreview.remove();
       }
       
-      // Create new video element
-      const recordedVideo = document.createElement('video');
-      recordedVideo.controls = true;
-      recordedVideo.className = 'recorded-preview w-100 mt-3';
-      recordedVideo.src = url;
+      // Create video element
+      const videoElement = document.createElement('video');
+      videoElement.controls = true;
+      videoElement.className = 'recorded-preview w-100 mt-3';
+      videoElement.src = url;
       
       // Add to question card
-      const videoSection = questionCard.querySelector('.video-section');
-      videoSection.appendChild(recordedVideo);
+      const videoSection = card.querySelector('.video-section');
+      videoSection.appendChild(videoElement);
     }
     
     // Retake video
-    function retakeVideo(questionCard) {
-      const videoFeedback = questionCard.querySelector('.video-feedback');
-      const startButton = questionCard.querySelector('.start-button');
-      const nextButton = questionCard.querySelector('.next-button');
-      const submitButton = questionCard.querySelector('.submit-button');
+    function retakeVideo(card) {
+      const videoFeedback = card.querySelector('.video-feedback');
+      const startButton = card.querySelector('.start-button');
       
       // Reset
-      questionCard.recordedChunks = [];
+      card.recordedChunks = [];
       videoFeedback.style.display = 'none';
       
       // Remove preview if exists
-      const recordedPreview = questionCard.querySelector('.recorded-preview');
+      const recordedPreview = card.querySelector('.recorded-preview');
       if (recordedPreview) {
         recordedPreview.remove();
       }
@@ -550,21 +513,11 @@
       // Update UI
       startButton.style.display = 'inline-block';
       
-      // Disable navigation
-      if (nextButton) {
-        nextButton.disabled = true;
-      }
-      
-      if (submitButton) {
-        submitButton.disabled = true;
-      }
-      
       // Remove from recorded set
-      const questionId = questionCard.id.replace('question-', '');
-      recordedQuestions.delete(questionId);
+      recordedQuestions.delete(card.id);
     }
     
-    // Get supported mime type
+    // Get supported mime type for video recording
     function getSupportedMimeType() {
       if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
         return 'video/webm;codecs=vp9';
@@ -577,14 +530,6 @@
       }
       return 'video/webm'; // Default fallback
     }
-    
-    // Validate form before submission
-    document.getElementById('applicationForm').addEventListener('submit', function(e) {
-      if (recordedQuestions.size < interviewQuestions.length) {
-        e.preventDefault();
-        alert('Please answer all interview questions before submitting.');
-      }
-    });
   });
 </script>
 {% endblock %} 

@@ -214,30 +214,21 @@
           </div>
         </div>
         
-        <!-- Interview Questions Section -->
+        <!-- Interview Questions info for employers only -->
+        {% if request.user.id == job.user.id and user.role == 'employer' %}
         <div class="bg-light p-3 border rounded mb-4">
-          <h3 class="text-primary h5 pl-3 mb-3">Interview Questions</h3>
+          <h3 class="text-primary h5 pl-3 mb-3">Manage Interview Questions</h3>
           <div class="px-3">
-            <a href="{% url 'question_generation:view_job_questions' job_id=job.id %}" class="btn btn-info btn-block mb-2">
-              <span class="icon-list-alt mr-2"></span>View Questions
-            </a>
-            
-            {% if request.user.id == job.user.id and user.role == 'employer' %}
+            <p class="small text-muted mb-2">Questions will be automatically presented to candidates during the application process.</p>
             <a href="{% url 'question_generation:generate_job_questions' job_id=job.id %}" class="btn btn-primary btn-block">
               <span class="icon-refresh mr-2"></span>Generate Questions
             </a>
-            {% endif %}
-            
-            {% if user.is_authenticated and user.role == 'employee' %}
-              {% is_job_already_applied job request.user as is_applied %}
-              {% if is_applied %}
-              <a href="{% url 'question_generation:answer_job_questions' job_id=job.id %}" class="btn btn-success btn-block mt-2">
-                <span class="icon-microphone mr-2"></span>Answer Questions
-              </a>
-              {% endif %}
-            {% endif %}
+            <a href="{% url 'question_generation:view_job_questions' job_id=job.id %}" class="btn btn-outline-primary btn-block mt-2">
+              <span class="icon-list-alt mr-2"></span>View Current Questions
+            </a>
           </div>
         </div>
+        {% endif %}
 
       </div>
     </div>

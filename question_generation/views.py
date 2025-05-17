@@ -7,8 +7,43 @@ from django.contrib import messages
 from .models import JobQuestion, ApplicantAnswer
 from jobapp.models import Job, Applicant
 from jobapp.permission import user_is_employer, user_is_employee
-from .utils import generate_questions_for_job
+from .utils import generate_questions_for_job, test_gemini_api
 from whisper_vid_audio.transcribe import WhisperTranscriber
+
+def test_question_generation(request):
+    """Test the question generation functionality"""
+    if not request.user.is_superuser:
+        return HttpResponse("Access denied. Only superusers can run this test.")
+    
+    api_working = test_gemini_api()
+    
+    response_data = {
+        "api_test": "Success" if api_working else "Failed",
+    }
+    
+    # If the API is working, try generating questions for a job
+    if api_working:
+        try:
+            # Get a job to test with
+            job = Job.objects.filter(is_published=True).first()
+            
+            if job:
+                # Clear existing questions
+                JobQuestion.objects.filter(job=job).delete()
+                
+                # Generate new questions
+                questions = generate_questions_for_job(job)
+                
+                # Add results to response
+                response_data["job_title"] = job.title
+                response_data["questions_generated"] = questions.count()
+                response_data["sample_questions"] = [q.question_text for q in questions[:3]]
+            else:
+                response_data["job_test"] = "No published jobs found to test with"
+        except Exception as e:
+            response_data["job_test_error"] = str(e)
+    
+    return JsonResponse(response_data)
 
 @login_required(login_url=reverse_lazy('account:login'))
 @user_is_employer

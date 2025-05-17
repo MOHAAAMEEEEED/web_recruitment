@@ -16,8 +16,26 @@ api_key = os.getenv("GEMINI_API_KEY") or getattr(settings, "GEMINI_API_KEY", Non
 if not api_key:
     raise ValueError("Please set the GEMINI_API_KEY in .env file or settings.py")
 
+# Verify API key isn't the placeholder
+if api_key == "YOUR_GEMINI_API_KEY":
+    print("WARNING: Using placeholder Gemini API key. Replace with actual key in settings.py or .env file")
+
 # Configure Gemini
-genai.configure(api_key=api_key)
+try:
+    genai.configure(api_key=api_key)
+    print(f"Gemini API configured with key: {api_key[:4]}{'*' * (len(api_key) - 8)}{api_key[-4:] if len(api_key) > 8 else ''}")
+except Exception as e:
+    print(f"Error configuring Gemini API: {str(e)}")
+
+def test_gemini_api():
+    """Test if the Gemini API is working properly"""
+    try:
+        result = gemini_prompt("Hello, please respond with 'The API is working correctly.' if you receive this message.")
+        print(f"Gemini API test result: {result}")
+        return result == "The API is working correctly."
+    except Exception as e:
+        print(f"Gemini API test failed: {str(e)}")
+        return False
 
 def gemini_prompt(prompt: str, temperature=0.7, max_retries=5) -> str:
     """Send a prompt to the Gemini API and get a response"""
@@ -198,32 +216,75 @@ def generate_questions_for_job(job, cv_skills=None):
     """Generate questions for a job and save them to the database"""
     from question_generation.models import JobQuestion
     
-    # Delete existing questions for this job
-    JobQuestion.objects.filter(job=job).delete()
+    # Log that we're starting question generation
+    print(f"Starting question generation for job: {job.title} (ID: {job.id})")
     
-    # Generate new questions
-    questions_data = generate_interview_questions(
-        job_title=job.title, 
-        job_description=job.description,
-        cv_skills=cv_skills
-    )
-    
-    # Save skill-specific questions
-    for skill, questions in questions_data["skill_questions"].items():
-        for q_text in questions:
-            JobQuestion.objects.create(
+    try:
+        # Delete existing questions for this job
+        JobQuestion.objects.filter(job=job).delete()
+        
+        # Generate new questions
+        questions_data = generate_interview_questions(
+            job_title=job.title, 
+            job_description=job.description,
+            cv_skills=cv_skills
+        )
+        
+        print(f"Generated questions data with {len(questions_data['general_questions'])} general questions and {len(questions_data['skill_questions'])} skill categories")
+        
+        # Count questions we'll create
+        total_questions = len(questions_data["general_questions"])
+        for skill, questions in questions_data["skill_questions"].items():
+            total_questions += len(questions)
+        
+        print(f"Creating {total_questions} questions in the database")
+        
+        question_objects = []
+        
+        # Save skill-specific questions
+        for skill, questions in questions_data["skill_questions"].items():
+            for q_text in questions:
+                question = JobQuestion.objects.create(
+                    job=job,
+                    question_text=q_text,
+                    is_general=False,
+                    skill_related=skill
+                )
+                question_objects.append(question)
+        
+        # Save general questions
+        for q_text in questions_data["general_questions"]:
+            question = JobQuestion.objects.create(
                 job=job,
                 question_text=q_text,
-                is_general=False,
-                skill_related=skill
+                is_general=True
             )
+            question_objects.append(question)
+        
+        print(f"Successfully created {len(question_objects)} questions")
+        return JobQuestion.objects.filter(job=job)
     
-    # Save general questions
-    for q_text in questions_data["general_questions"]:
-        JobQuestion.objects.create(
-            job=job,
-            question_text=q_text,
-            is_general=True
-        )
-    
-    return JobQuestion.objects.filter(job=job)
+    except Exception as e:
+        print(f"Error in generate_questions_for_job: {str(e)}")
+        # Try to create a few default questions if there was an error
+        try:
+            default_questions = [
+                "Tell me about yourself and why you're interested in this position.",
+                "What are your strongest skills relevant to this role?",
+                "Describe a challenging project you worked on and how you overcame obstacles.",
+                "How do you handle tight deadlines and pressure?",
+                "Do you have any questions about the role or company?"
+            ]
+            
+            for i, q_text in enumerate(default_questions):
+                JobQuestion.objects.create(
+                    job=job,
+                    question_text=q_text,
+                    is_general=True
+                )
+            
+            print(f"Created {len(default_questions)} default questions due to error")
+            return JobQuestion.objects.filter(job=job)
+        except Exception as inner_e:
+            print(f"Error creating default questions: {str(inner_e)}")
+            return JobQuestion.objects.none()
