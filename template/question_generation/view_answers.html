@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="main-title text-center">
+                    <h3>{{ applicant.user.get_full_name }}'s Interview Answers</h3>
+                    <p class="mt-3">Position: {{ job.title }} | Progress: {{ answered_count }} / {{ total_count }} questions answered</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-lg-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Applicant Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Name:</strong> {{ applicant.user.get_full_name }}</p>
+                                <p><strong>Email:</strong> {{ applicant.user.email }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Applied on:</strong> {{ applicant.timestamp|date:"F d, Y" }}</p>
+                                {% if applicant.similarity_score %}
+                                <p><strong>Video Introduction Score:</strong> {{ applicant.similarity_score|floatformat:2 }}%</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if questions_with_answers %}
+            {% for qa in questions_with_answers %}
+                <div class="row mt-3">
+                    <div class="col-lg-12">
+                        <div class="card mb-2">
+                            <div class="card-header {% if qa.question.is_general %}bg-primary{% else %}bg-success{% endif %} text-white">
+                                <h5 class="mb-0">
+                                    Question: {{ qa.question.question_text }}
+                                    {% if qa.question.skill_related %}
+                                    <span class="badge bg-light text-dark float-end">Skill: {{ qa.question.skill_related }}</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if qa.answer %}
+                                    <div class="answer-container">
+                                        <h6>Answer:</h6>
+                                        <p>{{ qa.answer.answer_text }}</p>
+                                        
+                                        {% if qa.answer.audio_file %}
+                                        <div class="audio-container mt-3">
+                                            <h6>Audio Recording:</h6>
+                                            <audio controls class="w-100">
+                                                <source src="{{ qa.answer.audio_file.url }}" type="audio/webm">
+                                                Your browser does not support the audio element.
+                                            </audio>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        This question has not been answered yet.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="row mt-4">
+                <div class="col-lg-12">
+                    <div class="alert alert-info">
+                        No questions or answers available for this applicant.
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row mt-4">
+            <div class="col-lg-12 text-center">
+                <a href="{% url 'jobapp:all-applicants' id=job.id %}" class="btn btn-primary">
+                    Back to All Applicants
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

@@ -31,6 +31,7 @@
                                     <th>Applied Date</th>
                                     <th>Video</th>
                                     <th>Similarity Score</th>
+                                    <th>Answers</th>
                                     <th>View</th>
                                 </tr>
                             </thead>
@@ -55,9 +56,14 @@
                                         {% endif %}
                                     </td>
                                     <td>
+                                        <a class="btn btn-primary btn-sm" href="{% url 'question_generation:view_applicant_answers' applicant_id=applicant.id job_id=applicant.job.id %}" role="button">
+                                            Answers
+                                        </a>
+                                    </td>
+                                    <td>
                                         <a class="btn btn-info btn-sm" href="{% url 'jobapp:applicant-details' applicant.user.id %}?job_id={{ applicant.job.id }}"
                                                 role="button">
-                                            Click
+                                            Details
                                         </a>
                                     </td>
                                 </tr>

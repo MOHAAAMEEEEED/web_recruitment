@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'account.apps.AccountConfig',
     'cv_parser.apps.CvParserConfig',
     'whisper_vid_audio.apps.WhisperVidAudioConfig',
+    'question_generation.apps.QuestionGenerationConfig',
 
     #3rd Party App
     'ckeditor',

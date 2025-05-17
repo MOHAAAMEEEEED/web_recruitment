@@ -14,6 +14,8 @@ from django.http import JsonResponse
 from .models import Video
 from django.views.decorators.csrf import csrf_exempt
 from whisper_vid_audio.transcribe import WhisperTranscriber
+import os
+import json
 
 from account.models import User
 from jobapp.forms import *
@@ -260,7 +262,7 @@ from django.urls import reverse_lazy
 @user_is_employee
 def apply_job_view(request, id):
     """
-    Handle job application process with video upload, transcription, and similarity score calculation.
+    Handle job application process with video responses to interview questions.
     """
     user = get_object_or_404(User, id=request.user.id)
     job = get_object_or_404(Job, id=id)
@@ -273,20 +275,28 @@ def apply_job_view(request, id):
     if request.method == 'POST':
         form = JobApplyForm(request.POST, request.FILES)
 
+        # Check if the form is valid
         if form.is_valid():
-            # Check if the video file is provided
-            if not request.FILES.get('video'):
+            # Check if at least the intro video file is provided
+            if not request.FILES.get('video_intro'):
                 messages.error(request, 'Video introduction is required!')
                 return render(request, 'jobapp/apply_job.html', {'form': form, 'job': job})
 
-            # Save the applicant details without video first
+            # Save the applicant details
             instance = form.save(commit=False)
             instance.user = user
             instance.job = job
             instance.save()
 
             try:
-                # Save the video and transcribe it
+                # Process the intro video for similarity score
+                intro_video = request.FILES.get('video_intro')
+                
+                # Save the video to the instance
+                instance.video = intro_video
+                instance.save()
+                
+                # Transcribe the intro video
                 transcriber = WhisperTranscriber()
                 result = transcriber.transcribe(instance.video.path)
                 transcription = result.get('text', '')
@@ -295,9 +305,66 @@ def apply_job_view(request, id):
                 similarity_score = calculate_similarity_score(job.description, transcription)
                 instance.transcription = transcription
                 instance.similarity_score = similarity_score
-
-                # Save transcription and similarity score
                 instance.save()
+                
+                # Import JobQuestion and ApplicantAnswer only if needed
+                try:
+                    from question_generation.models import JobQuestion, ApplicantAnswer
+                    from question_generation.utils import generate_questions_for_job
+                    
+                    # Get or generate questions for this job
+                    questions = JobQuestion.objects.filter(job=job)
+                    if not questions.exists():
+                        questions = generate_questions_for_job(job)
+                    
+                    # Process additional question videos if they exist
+                    for key, file in request.FILES.items():
+                        # Skip the intro video which we already processed
+                        if key == 'video_intro':
+                            continue
+                            
+                        if key.startswith('video_'):
+                            # Extract the question ID from the field name (video_skill1, video_final, etc.)
+                            question_id = key.replace('video_', '')
+                            
+                            # Find the corresponding question
+                            if question_id == 'intro':
+                                # Already handled the intro
+                                continue
+                                
+                            # Look for questions with IDs containing the question_id
+                            matching_questions = questions.filter(id__contains=question_id)
+                            
+                            if not matching_questions.exists():
+                                # If no exact match, look for questions with similar skill related field
+                                matching_questions = questions.filter(skill_related__icontains=question_id)
+                            
+                            # If we found a matching question, save the answer
+                            if matching_questions.exists():
+                                question = matching_questions.first()
+                                
+                                # Create answer record
+                                answer = ApplicantAnswer(
+                                    applicant=instance,
+                                    question=question,
+                                    audio_file=file
+                                )
+                                answer.save()
+                                
+                                # Transcribe the answer
+                                try:
+                                    answer_result = transcriber.transcribe(answer.audio_file.path)
+                                    answer_transcription = answer_result.get('text', '')
+                                    
+                                    # Save the transcription
+                                    answer.answer_text = answer_transcription
+                                    answer.transcription = answer_transcription
+                                    answer.save()
+                                except Exception as e:
+                                    print(f"Error transcribing answer for question {question_id}: {str(e)}")
+                except ImportError:
+                    # Question generation module not available
+                    pass
 
                 messages.success(request, 'You have successfully applied for this job!')
                 return redirect(reverse("jobapp:single-job", kwargs={'id': id}))
@@ -306,14 +373,47 @@ def apply_job_view(request, id):
                 # Clean up if something went wrong
                 if instance.pk:
                     instance.delete()
-                messages.error(request, f'Error during transcription or scoring: {str(e)}')
+                messages.error(request, f'Error during application process: {str(e)}')
                 return render(request, 'jobapp/apply_job.html', {'form': form, 'job': job})
         else:
             messages.error(request, 'Please correct the errors in the form.')
     else:
         form = JobApplyForm(initial={'job': job.id})
 
-    return render(request, 'jobapp/apply_job.html', {'form': form, 'job': job})
+    # Try to get questions for this job
+    questions = []
+    try:
+        from question_generation.models import JobQuestion
+        from question_generation.utils import generate_questions_for_job
+        
+        # Get or generate questions for this job
+        db_questions = JobQuestion.objects.filter(job=job)
+        if not db_questions.exists():
+            db_questions = generate_questions_for_job(job)
+            
+        # Convert to a format usable in the template
+        for q in db_questions:
+            question_type = 'general' if q.is_general else 'skill'
+            question_id = f"skill{q.id}" if q.skill_related else f"general{q.id}"
+            
+            questions.append({
+                'id': question_id,
+                'text': q.question_text,
+                'type': question_type,
+                'skill': q.skill_related or ''
+            })
+    except ImportError:
+        # Question generation module not available
+        pass
+        
+    # Convert questions to JSON for the template
+    questions_json = json.dumps(questions)
+        
+    return render(request, 'jobapp/apply_job.html', {
+        'form': form, 
+        'job': job,
+        'questions_json': questions_json
+    })
 
 
 from django.shortcuts import render

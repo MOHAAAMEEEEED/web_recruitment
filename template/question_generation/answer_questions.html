@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="main-title text-center">
+                    <h3>Answer Interview Questions for {{ job.title }}</h3>
+                    <p class="mt-3">Progress: {{ answered_count }} / {{ total_count }} questions answered</p>
+                </div>
+            </div>
+        </div>
+
+        {% if unanswered_questions %}
+        <div class="row mt-4">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Question to Answer</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Display the first unanswered question -->
+                        {% with question=unanswered_questions.first %}
+                        <div class="question-container mb-4">
+                            <h5>{{ question.question_text }}</h5>
+                            {% if question.skill_related %}
+                            <span class="badge bg-success">Skill: {{ question.skill_related }}</span>
+                            {% else %}
+                            <span class="badge bg-primary">General Question</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="audio-recorder mt-4">
+                            <div class="d-flex justify-content-center mb-3">
+                                <button id="startRecording" class="btn btn-danger me-2">
+                                    <i class="fas fa-microphone"></i> Start Recording
+                                </button>
+                                <button id="stopRecording" class="btn btn-secondary" disabled>
+                                    <i class="fas fa-stop"></i> Stop Recording
+                                </button>
+                            </div>
+                            
+                            <div class="recording-status text-center mb-3">
+                                <span id="recordingStatus">Not recording</span>
+                                <div id="recordingTimer" class="mt-1 fw-bold" style="display: none;">00:00</div>
+                            </div>
+                            
+                            <div class="audio-preview text-center mb-3" style="display: none;" id="audioPreview">
+                                <audio id="audioPlayer" controls class="w-100"></audio>
+                            </div>
+                            
+                            <form action="{% url 'question_generation:answer_job_questions' job_id=job.id %}" method="post" enctype="multipart/form-data" id="answerForm">
+                                {% csrf_token %}
+                                <input type="hidden" name="question_id" value="{{ question.id }}">
+                                <input type="file" name="audio_file" id="audioFile" style="display: none;">
+                                
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-success" id="submitButton" disabled>
+                                        Submit Answer
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="row mt-4">
+            <div class="col-lg-12">
+                <div class="alert alert-success">
+                    <h4 class="alert-heading">All Questions Answered!</h4>
+                    <p>You have successfully answered all the interview questions for this job application.</p>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'jobapp:single-job' id=job.id %}" class="btn btn-primary">
+                        Back to Job Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% block extrascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let mediaRecorder;
+        let audioChunks = [];
+        let startTime;
+        let timerInterval;
+        
+        const startButton = document.getElementById('startRecording');
+        const stopButton = document.getElementById('stopRecording');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioPreview = document.getElementById('audioPreview');
+        const audioFile = document.getElementById('audioFile');
+        const submitButton = document.getElementById('submitButton');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const recordingTimer = document.getElementById('recordingTimer');
+        
+        // Start recording
+        startButton.addEventListener('click', async function() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.addEventListener('dataavailable', function(event) {
+                    audioChunks.push(event.data);
+                });
+                
+                mediaRecorder.addEventListener('stop', function() {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    audioPlayer.src = audioUrl;
+                    audioPreview.style.display = 'block';
+                    
+                    // Create a File object from Blob
+                    const fileName = `answer_${new Date().getTime()}.webm`;
+                    const audioFileObj = new File([audioBlob], fileName, { type: 'audio/webm' });
+                    
+                    // Create a DataTransfer object to set the file
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(audioFileObj);
+                    audioFile.files = dataTransfer.files;
+                    
+                    submitButton.disabled = false;
+                    
+                    // Stop all tracks from the stream
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // Stop timer
+                    clearInterval(timerInterval);
+                    recordingTimer.style.display = 'none';
+                });
+                
+                mediaRecorder.start();
+                startTime = Date.now();
+                
+                // Start timer
+                recordingTimer.style.display = 'block';
+                timerInterval = setInterval(updateTimer, 1000);
+                
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                recordingStatus.textContent = 'Recording in progress...';
+                recordingStatus.classList.add('text-danger');
+                
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                alert('Error accessing your microphone. Please make sure your microphone is properly connected and you have granted permission to use it.');
+            }
+        });
+        
+        // Stop recording
+        stopButton.addEventListener('click', function() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                recordingStatus.textContent = 'Recording stopped';
+                recordingStatus.classList.remove('text-danger');
+            }
+        });
+        
+        // Update timer function
+        function updateTimer() {
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+            const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+            recordingTimer.textContent = `${minutes}:${seconds}`;
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %} 

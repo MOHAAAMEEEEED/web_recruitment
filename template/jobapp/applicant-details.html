@@ -127,6 +127,35 @@
         </div>
       </div>
       
+      <!-- Interview Questions Row -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="bg-white p-4 rounded shadow-sm">
+            <div class="d-flex align-items-center mb-4">
+              <span class="icon-microphone text-primary mr-2" style="font-size: 2rem;"></span>
+              <h3 class="text-black mb-0">Interview Questions & Answers</h3>
+            </div>
+            
+            {% if application %}
+            <div class="mb-4">
+              <a href="{% url 'question_generation:view_applicant_answers' applicant_id=application.id job_id=application.job.id %}" class="btn btn-primary">
+                <i class="icon-list-alt mr-2"></i> View Interview Answers
+              </a>
+              <a href="{% url 'question_generation:view_job_questions' job_id=application.job.id %}" class="btn btn-info ml-2">
+                <i class="icon-question-circle mr-2"></i> View All Questions
+              </a>
+            </div>
+            
+            <div class="alert alert-info">
+              <p class="mb-0">Access the detailed view to see all of the candidate's interview answers including audio recordings and transcriptions.</p>
+            </div>
+            {% else %}
+            <p><strong class="text-black text-danger">No application information available.</strong></p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
       <!-- Other Applications Row -->
       {% if applied_jobs.count > 1 %}
       <div class="row mt-4">

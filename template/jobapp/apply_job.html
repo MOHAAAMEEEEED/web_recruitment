@@ -34,7 +34,7 @@
     
     <div class="row mb-5">
       <div class="col-lg-12">
-        <form class="p-4 p-md-5 border rounded" method="post" enctype="multipart/form-data">
+        <form class="p-4 p-md-5 border rounded" method="post" enctype="multipart/form-data" id="applicationForm">
           {% csrf_token %}
           
           {% if form.errors %}
@@ -48,42 +48,132 @@
           {% endif %}
           
           <input type="hidden" name="job" id="id_job" value="{{ job.id }}">
+          <input type="hidden" name="current_question" id="current_question" value="0">
           
-          <div class="row form-group">
+          <div class="row form-group mb-4">
             <div class="col-md-12">
-              <h3 class="text-black mb-4">Video Introduction</h3>
-              <p>Please record a brief video introduction of yourself. This will help the employer get to know you better.</p>
+              <h3 class="text-black mb-4">Interview Questions</h3>
+              <p>Please record a video answering each of the following questions. This will help the employer evaluate your candidacy better.</p>
+              <div class="progress mb-3">
+                <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progress-bar">0%</div>
+              </div>
             </div>
           </div>
           
-          <!-- Video capture section -->
-          <div class="row form-group">
-            <div class="col-md-12 text-center mb-4">
-              <div id="videoContainer" style="display: flex; flex-direction: column; align-items: center;">
-                <video id="preview" width="640" height="480" autoplay muted style="background-color: #ddd; margin-bottom: 10px;"></video>
-                <div id="videoControls">
-                  <button type="button" id="startButton" class="btn btn-primary">Start Recording</button>
-                  <button type="button" id="stopButton" class="btn btn-danger" style="display: none;">Stop Recording</button>
-                </div>
-                <p id="timer" class="mt-2" style="display: none; font-weight: bold;">00:00</p>
+          <!-- Interview Questions Section -->
+          <div id="questions-container">
+            <!-- Questions will be loaded and displayed here -->
+            <div class="question-card card mb-4" id="intro-question" data-question-type="intro">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Question 1: Self Introduction</h5>
               </div>
-              
-              <div id="recordingStatus" class="mt-2" style="display: none;">
-                <div class="spinner-grow text-danger" role="status">
-                  <span class="sr-only">Recording...</span>
-                </div>
-                <span class="ml-2">Recording...</span>
-              </div>
-              
-              <!-- Hidden file input for the recorded video blob -->
-              <div class="mt-3">
-                <input type="file" id="videoInput" name="video" accept="video/*" style="display: none;" required>
-                <div id="videoFeedback" class="mt-2" style="display: none;">
-                  <div class="alert alert-success">
-                    <strong>Video recorded successfully!</strong> 
-                    <a href="#" id="previewRecording">Preview recording</a> | 
-                    <a href="#" id="retakeVideo">Record again</a>
+              <div class="card-body">
+                <p class="question-text mb-4">Please introduce yourself and explain why you're interested in this position.</p>
+                
+                <!-- Video capture section -->
+                <div class="video-section text-center mb-4">
+                  <video class="preview-video" width="640" height="480" autoplay muted style="background-color: #ddd; margin-bottom: 10px;"></video>
+                  <div class="video-controls">
+                    <button type="button" class="btn btn-primary start-button">Start Recording</button>
+                    <button type="button" class="btn btn-danger stop-button" style="display: none;">Stop Recording</button>
                   </div>
+                  <p class="timer mt-2" style="display: none; font-weight: bold;">00:00</p>
+                  <div class="recording-status mt-2" style="display: none;">
+                    <div class="spinner-grow text-danger" role="status">
+                      <span class="sr-only">Recording...</span>
+                    </div>
+                    <span class="ml-2">Recording...</span>
+                  </div>
+                  <div class="video-feedback mt-2" style="display: none;">
+                    <div class="alert alert-success">
+                      <strong>Video recorded successfully!</strong> 
+                      <a href="#" class="preview-recording-link">Preview recording</a> | 
+                      <a href="#" class="retake-video-link">Record again</a>
+                    </div>
+                  </div>
+                  <input type="file" name="video_intro" class="video-input" accept="video/*" style="display: none;" required>
+                </div>
+                
+                <div class="navigation-buttons text-right">
+                  <button type="button" class="btn btn-primary next-button" disabled>Next Question</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Template for skill questions - will be cloned by JavaScript -->
+            <div class="question-card card mb-4" id="skill-question-template" style="display: none;" data-question-type="skill">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0 question-title"></h5>
+              </div>
+              <div class="card-body">
+                <p class="question-text mb-4"></p>
+                
+                <!-- Video capture section -->
+                <div class="video-section text-center mb-4">
+                  <video class="preview-video" width="640" height="480" autoplay muted style="background-color: #ddd; margin-bottom: 10px;"></video>
+                  <div class="video-controls">
+                    <button type="button" class="btn btn-primary start-button">Start Recording</button>
+                    <button type="button" class="btn btn-danger stop-button" style="display: none;">Stop Recording</button>
+                  </div>
+                  <p class="timer mt-2" style="display: none; font-weight: bold;">00:00</p>
+                  <div class="recording-status mt-2" style="display: none;">
+                    <div class="spinner-grow text-danger" role="status">
+                      <span class="sr-only">Recording...</span>
+                    </div>
+                    <span class="ml-2">Recording...</span>
+                  </div>
+                  <div class="video-feedback mt-2" style="display: none;">
+                    <div class="alert alert-success">
+                      <strong>Video recorded successfully!</strong> 
+                      <a href="#" class="preview-recording-link">Preview recording</a> | 
+                      <a href="#" class="retake-video-link">Record again</a>
+                    </div>
+                  </div>
+                  <input type="file" class="video-input" accept="video/*" style="display: none;" required>
+                </div>
+                
+                <div class="navigation-buttons text-right">
+                  <button type="button" class="btn btn-secondary prev-button">Previous Question</button>
+                  <button type="button" class="btn btn-primary next-button" disabled>Next Question</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Final question template - will be cloned by JavaScript -->
+            <div class="question-card card mb-4" id="final-question-template" style="display: none;" data-question-type="final">
+              <div class="card-header bg-info text-white">
+                <h5 class="mb-0 question-title"></h5>
+              </div>
+              <div class="card-body">
+                <p class="question-text mb-4"></p>
+                
+                <!-- Video capture section -->
+                <div class="video-section text-center mb-4">
+                  <video class="preview-video" width="640" height="480" autoplay muted style="background-color: #ddd; margin-bottom: 10px;"></video>
+                  <div class="video-controls">
+                    <button type="button" class="btn btn-primary start-button">Start Recording</button>
+                    <button type="button" class="btn btn-danger stop-button" style="display: none;">Stop Recording</button>
+                  </div>
+                  <p class="timer mt-2" style="display: none; font-weight: bold;">00:00</p>
+                  <div class="recording-status mt-2" style="display: none;">
+                    <div class="spinner-grow text-danger" role="status">
+                      <span class="sr-only">Recording...</span>
+                    </div>
+                    <span class="ml-2">Recording...</span>
+                  </div>
+                  <div class="video-feedback mt-2" style="display: none;">
+                    <div class="alert alert-success">
+                      <strong>Video recorded successfully!</strong> 
+                      <a href="#" class="preview-recording-link">Preview recording</a> | 
+                      <a href="#" class="retake-video-link">Record again</a>
+                    </div>
+                  </div>
+                  <input type="file" class="video-input" accept="video/*" style="display: none;" required>
+                </div>
+                
+                <div class="navigation-buttons text-right">
+                  <button type="button" class="btn btn-secondary prev-button">Previous Question</button>
+                  <button type="submit" class="btn btn-success submit-button" id="submitButton" disabled>Submit Application</button>
                 </div>
               </div>
             </div>
@@ -91,13 +181,7 @@
           
           <div class="row form-group">
             <div class="col-md-12">
-              <p>By submitting this application, you agree that your video introduction will be transcribed using AI technology.</p>
-            </div>
-          </div>
-          
-          <div class="row form-group">
-            <div class="col-md-12">
-              <input type="submit" value="Submit Application" class="btn btn-primary btn-md text-white" id="submitButton" disabled>
+              <p>By submitting this application, you agree that your video answers will be transcribed using AI technology.</p>
             </div>
           </div>
         </form>
@@ -109,210 +193,398 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<!-- Pass server questions data to JavaScript -->
+<script type="text/javascript">
+  // Server-provided questions
+  var serverQuestions = {% if questions_json %}{{ questions_json|safe }}{% else %}[]{% endif %};
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    let mediaRecorder;
-    let recordedBlobs = [];
-    let stream;
-    let timerInterval;
-    let seconds = 0;
-    const maxRecordingTime = 120; // 2 minutes in seconds
+    // Constants
+    const MAX_RECORDING_TIME = 120; // 2 minutes in seconds
     
-    const video = document.getElementById('preview');
-    const startButton = document.getElementById('startButton');
-    const stopButton = document.getElementById('stopButton');
-    const videoInput = document.getElementById('videoInput');
-    const submitButton = document.getElementById('submitButton');
-    const videoFeedback = document.getElementById('videoFeedback');
-    const recordingStatus = document.getElementById('recordingStatus');
-    const timerElement = document.getElementById('timer');
-    const previewRecording = document.getElementById('previewRecording');
-    const retakeVideo = document.getElementById('retakeVideo');
+    // Application questions - Use server-provided questions if available, otherwise use defaults
+    let interviewQuestions = [
+      { id: 'intro', text: 'Please introduce yourself and explain why you\'re interested in this position.', type: 'intro', title: 'Question 1: Self Introduction' },
+      { id: 'skill1', text: 'What are your strongest technical skills relevant to this position?', type: 'skill', title: 'Question 2: Technical Skills' },
+      { id: 'skill2', text: 'Describe a challenging project you worked on and how you overcame obstacles.', type: 'skill', title: 'Question 3: Problem Solving' },
+      { id: 'skill3', text: 'How do you handle tight deadlines and pressure?', type: 'skill', title: 'Question 4: Work Style' },
+      { id: 'final', text: 'Do you have any questions about the role or additional information you\'d like to share?', type: 'final', title: 'Question 5: Final Thoughts' }
+    ];
     
-    // Setup the camera when the start button is clicked
-    startButton.addEventListener('click', async () => {
-      try {
-        const constraints = {
-          audio: true,
-          video: {
-            width: 640,
-            height: 480
-          }
+    // Use server-provided questions if available
+    if (serverQuestions.length > 0) {
+      // Map server questions to the format we need
+      const mappedQuestions = serverQuestions.map((q, index) => {
+        let type = 'skill';
+        if (index === 0) type = 'intro';
+        if (index === serverQuestions.length - 1) type = 'final';
+        
+        return {
+          id: q.id,
+          text: q.text,
+          type: type,
+          title: `Question ${index + 1}: ${q.skill || 'General'}`,
+          skill: q.skill
         };
+      });
+      
+      // Add intro question if not present
+      if (!mappedQuestions.find(q => q.type === 'intro')) {
+        mappedQuestions.unshift(interviewQuestions[0]);
+      }
+      
+      // Add final question if not present
+      if (!mappedQuestions.find(q => q.type === 'final')) {
+        mappedQuestions.push(interviewQuestions[interviewQuestions.length - 1]);
+      }
+      
+      interviewQuestions = mappedQuestions;
+    }
+    
+    const TOTAL_QUESTIONS = interviewQuestions.length;
+    
+    // Track current question
+    let currentQuestionIndex = 0;
+    let recordedQuestions = new Set();
+    
+    // Setup questions
+    setupQuestions();
+    updateQuestionVisibility();
+    updateProgressBar();
+    
+    // Function to set up questions in the DOM
+    function setupQuestions() {
+      const questionsContainer = document.getElementById('questions-container');
+      const skillTemplate = document.getElementById('skill-question-template');
+      const finalTemplate = document.getElementById('final-question-template');
+      
+      // Start with the intro question - already in the DOM
+      
+      // Add skill questions
+      for (let i = 1; i < interviewQuestions.length - 1; i++) {
+        const question = interviewQuestions[i];
+        const newQuestion = skillTemplate.cloneNode(true);
         
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = stream;
+        newQuestion.id = `question-${question.id}`;
+        newQuestion.style.display = 'none';
+        newQuestion.querySelector('.question-title').textContent = question.title;
+        newQuestion.querySelector('.question-text').textContent = question.text;
+        newQuestion.querySelector('.video-input').name = `video_${question.id}`;
+        newQuestion.setAttribute('data-question-index', i);
         
-        // Determine supported mime types
-        let mimeType = 'video/webm';
-        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-          mimeType = 'video/webm;codecs=vp9';
-        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-          mimeType = 'video/webm;codecs=vp8';
-        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-          mimeType = 'video/mp4';
+        questionsContainer.appendChild(newQuestion);
+      }
+      
+      // Add final question
+      const finalQuestion = interviewQuestions[interviewQuestions.length - 1];
+      const newFinalQuestion = finalTemplate.cloneNode(true);
+      
+      newFinalQuestion.id = `question-${finalQuestion.id}`;
+      newFinalQuestion.style.display = 'none';
+      newFinalQuestion.querySelector('.question-title').textContent = finalQuestion.title;
+      newFinalQuestion.querySelector('.question-text').textContent = finalQuestion.text;
+      newFinalQuestion.querySelector('.video-input').name = `video_${finalQuestion.id}`;
+      newFinalQuestion.setAttribute('data-question-index', interviewQuestions.length - 1);
+      
+      questionsContainer.appendChild(newFinalQuestion);
+      
+      // Set up event listeners for all questions
+      setupQuestionEventListeners();
+    }
+    
+    // Set up event listeners for all questions
+    function setupQuestionEventListeners() {
+      // Start buttons
+      document.querySelectorAll('.start-button').forEach(button => {
+        button.addEventListener('click', function() {
+          const questionCard = this.closest('.question-card');
+          startRecording(questionCard);
+        });
+      });
+      
+      // Stop buttons
+      document.querySelectorAll('.stop-button').forEach(button => {
+        button.addEventListener('click', function() {
+          const questionCard = this.closest('.question-card');
+          stopRecording(questionCard);
+        });
+      });
+      
+      // Preview links
+      document.querySelectorAll('.preview-recording-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const questionCard = this.closest('.question-card');
+          previewRecording(questionCard);
+        });
+      });
+      
+      // Retake links
+      document.querySelectorAll('.retake-video-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const questionCard = this.closest('.question-card');
+          retakeVideo(questionCard);
+        });
+      });
+      
+      // Next buttons
+      document.querySelectorAll('.next-button').forEach(button => {
+        button.addEventListener('click', function() {
+          const questionCard = this.closest('.question-card');
+          const questionIndex = parseInt(questionCard.getAttribute('data-question-index') || '0');
+          goToQuestion(questionIndex + 1);
+        });
+      });
+      
+      // Previous buttons
+      document.querySelectorAll('.prev-button').forEach(button => {
+        button.addEventListener('click', function() {
+          const questionCard = this.closest('.question-card');
+          const questionIndex = parseInt(questionCard.getAttribute('data-question-index') || '0');
+          goToQuestion(questionIndex - 1);
+        });
+      });
+    }
+    
+    // Show only the current question
+    function updateQuestionVisibility() {
+      document.querySelectorAll('.question-card').forEach((card, index) => {
+        if (index === currentQuestionIndex) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
         }
-        
-        // Setup media recorder with proper options
-        const options = { mimeType };
-        mediaRecorder = new MediaRecorder(stream, options);
-        
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data && event.data.size > 0) {
-            recordedBlobs.push(event.data);
-          }
-        };
-        
-        mediaRecorder.onstop = () => {
-          // Create a Blob from the recorded chunks
-          const blob = new Blob(recordedBlobs, { type: mimeType });
-          
-          // Create a file from the blob
-          const fileName = `recorded-video-${new Date().toISOString()}.webm`;
-          const videoFile = new File([blob], fileName, { type: mimeType });
-          
-          // Create a FileList-like object to set the files property
-          try {
-            // Modern browsers support DataTransfer
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(videoFile);
-            videoInput.files = dataTransfer.files;
-          } catch (e) {
-            console.error('DataTransfer not supported, using direct assignment', e);
-            // Fall back to direct assignment (might not work in all browsers)
-            videoInput.file = videoFile;
-          }
-          
-          // Show feedback and enable submit button
-          videoFeedback.style.display = 'block';
-          submitButton.disabled = false;
-          
-          // Hide recording status
-          recordingStatus.style.display = 'none';
-          
-          // For debugging - verify file was attached
-          console.log('Video attached to form:', videoInput.files[0]);
-        };
-        
-        // Clear any previous recordings
-        recordedBlobs = [];
-        
-        // Start recording
-        mediaRecorder.start(100); // Collect data in 100ms chunks
-        
-        // Start timer
-        seconds = 0;
-        timerElement.textContent = '00:00';
-        timerElement.style.display = 'block';
-        timerInterval = setInterval(updateTimer, 1000);
-        
-        // Update UI
-        startButton.style.display = 'none';
-        stopButton.style.display = 'inline-block';
-        recordingStatus.style.display = 'block';
-        
-      } catch (error) {
-        console.error('Error accessing media devices:', error);
-        alert('Error accessing camera or microphone. Please make sure your browser has permission to use these devices.');
-      }
-    });
+      });
+      
+      // Update hidden input with current question
+      document.getElementById('current_question').value = currentQuestionIndex;
+    }
     
-    // Stop recording when the stop button is clicked
-    stopButton.addEventListener('click', () => {
-      stopRecording();
-    });
+    // Update progress bar
+    function updateProgressBar() {
+      const progressPercent = Math.round((currentQuestionIndex / (interviewQuestions.length - 1)) * 100);
+      const progressBar = document.getElementById('progress-bar');
+      progressBar.style.width = `${progressPercent}%`;
+      progressBar.setAttribute('aria-valuenow', progressPercent);
+      progressBar.textContent = `${progressPercent}%`;
+    }
     
-    // Preview recording
-    previewRecording.addEventListener('click', (e) => {
-      e.preventDefault();
-      
-      // Create a video element to play the recording
-      const recordedVideo = document.createElement('video');
-      recordedVideo.controls = true;
-      recordedVideo.style.maxWidth = '100%';
-      recordedVideo.style.marginTop = '10px';
-      
-      // Create a new blob from the recorded data
-      const blob = new Blob(recordedBlobs, { type: 'video/webm' });
-      recordedVideo.src = URL.createObjectURL(blob);
-      
-      // Remove any previous recordings
-      const oldVideo = document.querySelector('#videoContainer .recorded-video');
-      if (oldVideo) {
-        oldVideo.remove();
+    // Go to specific question
+    function goToQuestion(index) {
+      if (index >= 0 && index < interviewQuestions.length) {
+        currentQuestionIndex = index;
+        updateQuestionVisibility();
+        updateProgressBar();
       }
-      
-      // Add the class for future reference
-      recordedVideo.className = 'recorded-video';
-      
-      // Append to the container
-      document.getElementById('videoContainer').appendChild(recordedVideo);
-    });
+    }
     
-    // Record again
-    retakeVideo.addEventListener('click', (e) => {
-      e.preventDefault();
+    // Start recording for a specific question card
+    function startRecording(questionCard) {
+      const videoElement = questionCard.querySelector('.preview-video');
+      const startButton = questionCard.querySelector('.start-button');
+      const stopButton = questionCard.querySelector('.stop-button');
+      const recordingStatus = questionCard.querySelector('.recording-status');
+      const timerElement = questionCard.querySelector('.timer');
       
-      // Reset
-      recordedBlobs = [];
-      videoFeedback.style.display = 'none';
-      submitButton.disabled = true;
-      
-      // Remove any previous recordings
-      const oldVideo = document.querySelector('#videoContainer .recorded-video');
-      if (oldVideo) {
-        oldVideo.remove();
-      }
-      
-      // Ensure the video input is cleared
-      try {
-        const dataTransfer = new DataTransfer();
-        videoInput.files = dataTransfer.files;
-      } catch (e) {
-        console.error('DataTransfer not supported for clearing', e);
-        // Try direct approach
-        videoInput.value = '';
-      }
-      
-      // Show the start button again
-      startButton.style.display = 'inline-block';
-    });
+      navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+        .then(stream => {
+          // Store stream in the card for later access
+          questionCard.stream = stream;
+          videoElement.srcObject = stream;
+          
+          // Setup recorder
+          const mimeType = getSupportedMimeType();
+          questionCard.mediaRecorder = new MediaRecorder(stream, { mimeType });
+          questionCard.recordedChunks = [];
+          
+          questionCard.mediaRecorder.ondataavailable = event => {
+            if (event.data.size > 0) {
+              questionCard.recordedChunks.push(event.data);
+            }
+          };
+          
+          // Start recording
+          questionCard.mediaRecorder.start(100);
+          
+          // Start timer
+          questionCard.seconds = 0;
+          timerElement.textContent = '00:00';
+          timerElement.style.display = 'block';
+          questionCard.timerInterval = setInterval(() => updateQuestionTimer(questionCard), 1000);
+          
+          // Update UI
+          startButton.style.display = 'none';
+          stopButton.style.display = 'inline-block';
+          recordingStatus.style.display = 'block';
+        })
+        .catch(error => {
+          console.error('Error accessing media devices:', error);
+          alert('Error accessing camera or microphone. Please make sure your browser has permission to use these devices.');
+        });
+    }
     
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    // Stop recording for a specific question card
+    function stopRecording(questionCard) {
+      const videoElement = questionCard.querySelector('.preview-video');
+      const startButton = questionCard.querySelector('.start-button');
+      const stopButton = questionCard.querySelector('.stop-button');
+      const recordingStatus = questionCard.querySelector('.recording-status');
+      const timerElement = questionCard.querySelector('.timer');
+      const videoInput = questionCard.querySelector('.video-input');
+      const videoFeedback = questionCard.querySelector('.video-feedback');
+      const nextButton = questionCard.querySelector('.next-button');
+      const submitButton = questionCard.querySelector('.submit-button');
+      
+      if (questionCard.mediaRecorder && questionCard.mediaRecorder.state !== 'inactive') {
         // Stop the recording
-        mediaRecorder.stop();
+        questionCard.mediaRecorder.stop();
         
         // Stop the timer
-        clearInterval(timerInterval);
+        clearInterval(questionCard.timerInterval);
         
-        // Stop all tracks on the stream
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
+        // Get question ID
+        const questionId = questionCard.id.replace('question-', '');
+        if (questionId === 'intro-question') {
+          recordedQuestions.add('intro');
+        } else {
+          recordedQuestions.add(questionId);
         }
         
-        // Reset the video element
-        video.srcObject = null;
+        // Create a file from the recorded data
+        const blob = new Blob(questionCard.recordedChunks, { type: getSupportedMimeType() });
+        const fileName = `question_${questionId}_${new Date().toISOString()}.webm`;
+        const videoFile = new File([blob], fileName, { type: getSupportedMimeType() });
+        
+        // Attach to form
+        try {
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(videoFile);
+          videoInput.files = dataTransfer.files;
+        } catch (e) {
+          console.error('DataTransfer not supported:', e);
+          videoInput.file = videoFile;
+        }
+        
+        // Stop tracks
+        if (questionCard.stream) {
+          questionCard.stream.getTracks().forEach(track => track.stop());
+        }
         
         // Update UI
+        videoElement.srcObject = null;
         stopButton.style.display = 'none';
+        recordingStatus.style.display = 'none';
         timerElement.style.display = 'none';
+        videoFeedback.style.display = 'block';
+        
+        // Enable navigation
+        if (nextButton) {
+          nextButton.disabled = false;
+        }
+        
+        // Check if it's the final question
+        if (submitButton) {
+          submitButton.disabled = false;
+        }
       }
     }
     
-    function updateTimer() {
-      seconds++;
+    // Update timer for a question
+    function updateQuestionTimer(questionCard) {
+      const timerElement = questionCard.querySelector('.timer');
+      questionCard.seconds++;
       
-      // Format seconds to MM:SS
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+      // Format time
+      const minutes = Math.floor(questionCard.seconds / 60);
+      const seconds = questionCard.seconds % 60;
+      timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
       
-      // Auto-stop recording after max time
-      if (seconds >= maxRecordingTime) {
-        stopRecording();
+      // Auto-stop after max time
+      if (questionCard.seconds >= MAX_RECORDING_TIME) {
+        stopRecording(questionCard);
       }
     }
+    
+    // Preview recording
+    function previewRecording(questionCard) {
+      const blob = new Blob(questionCard.recordedChunks, { type: getSupportedMimeType() });
+      const url = URL.createObjectURL(blob);
+      
+      // Remove existing preview
+      const oldPreview = questionCard.querySelector('.recorded-preview');
+      if (oldPreview) {
+        oldPreview.remove();
+      }
+      
+      // Create new video element
+      const recordedVideo = document.createElement('video');
+      recordedVideo.controls = true;
+      recordedVideo.className = 'recorded-preview w-100 mt-3';
+      recordedVideo.src = url;
+      
+      // Add to question card
+      const videoSection = questionCard.querySelector('.video-section');
+      videoSection.appendChild(recordedVideo);
+    }
+    
+    // Retake video
+    function retakeVideo(questionCard) {
+      const videoFeedback = questionCard.querySelector('.video-feedback');
+      const startButton = questionCard.querySelector('.start-button');
+      const nextButton = questionCard.querySelector('.next-button');
+      const submitButton = questionCard.querySelector('.submit-button');
+      
+      // Reset
+      questionCard.recordedChunks = [];
+      videoFeedback.style.display = 'none';
+      
+      // Remove preview if exists
+      const recordedPreview = questionCard.querySelector('.recorded-preview');
+      if (recordedPreview) {
+        recordedPreview.remove();
+      }
+      
+      // Update UI
+      startButton.style.display = 'inline-block';
+      
+      // Disable navigation
+      if (nextButton) {
+        nextButton.disabled = true;
+      }
+      
+      if (submitButton) {
+        submitButton.disabled = true;
+      }
+      
+      // Remove from recorded set
+      const questionId = questionCard.id.replace('question-', '');
+      recordedQuestions.delete(questionId);
+    }
+    
+    // Get supported mime type
+    function getSupportedMimeType() {
+      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+        return 'video/webm;codecs=vp9';
+      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+        return 'video/webm;codecs=vp8';
+      } else if (MediaRecorder.isTypeSupported('video/webm')) {
+        return 'video/webm';
+      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+        return 'video/mp4';
+      }
+      return 'video/webm'; // Default fallback
+    }
+    
+    // Validate form before submission
+    document.getElementById('applicationForm').addEventListener('submit', function(e) {
+      if (recordedQuestions.size < interviewQuestions.length) {
+        e.preventDefault();
+        alert('Please answer all interview questions before submitting.');
+      }
+    });
   });
 </script>
 {% endblock %} 

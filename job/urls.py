@@ -25,6 +25,7 @@ urlpatterns = [
     path('__debug__/', include('debug_toolbar.urls')),
     path('', include('cv_parser.urls')),
     path('whisper_vid_audio/', include('whisper_vid_audio.urls')),
+    path('questions/', include('question_generation.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
  
 
